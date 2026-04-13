@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinnEM Akatemia 2026 — Päivystyksen potilasvirta-analyysi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jstat@latest/dist/jstat.min.js"></script>
+<style>
+/* ══════════ DESIGN TOKENS (from interaktiiviset.html) ══════════ */
+:root {
+  --primary: #1B4F8A;
+  --primary-dark: #0F3966;
+  --primary-light: #EAF1FA;
+  --primary-lighter: #F5F9FD;
+  --accent: #0D9488;
+  --accent-dark: #0B7A70;
+  --accent-light: #D1F3EF;
+  --success: #10B981;
+  --success-light: #D1FAE5;
+  --warning: #F59E0B;
+  --warning-light: #FEF3C7;
+  --error: #DC2626;
+  --error-light: #FEE2E2;
+  --purple: #7C3AED;
+  --purple-light: #EDE9FE;
+  --text: #0F172A;
+  --text-muted: #64748B;
+  --text-dim: #94A3B8;
+  --border: #E5E9F0;
+  --border-strong: #CBD5E1;
+  --bg: #FAFBFC;
+  --bg-warm: #F6F7F9;
+  --bg-card: #FFFFFF;
+  --sidebar-w: 280px;
+  --main-max: 1160px;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  --r: 14px;
+  --r-sm: 8px;
+  --r-lg: 20px;
+  --sh-sm: 0 1px 2px rgba(15,23,42,.04);
+  --sh: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
+  --sh-md: 0 4px 16px rgba(15,23,42,.08), 0 16px 40px rgba(15,23,42,.08);
+  --sh-lg: 0 8px 32px rgba(15,23,42,.12), 0 24px 64px rgba(15,23,42,.10);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;scroll-behavior:smooth}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  background-image:
+    linear-gradient(to right, rgba(27,79,138,.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(27,79,138,.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ══════════ SIDEBAR ══════════ */
+.sidebar{width:var(--sidebar-w);background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;overflow-y:auto;z-index:100;box-shadow:var(--sh-md)}
+.sb-header{padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.sb-logo{display:flex;align-items:center;gap:10px}
+.sb-logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--primary),#2563EB);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;flex-shrink:0;box-shadow:0 3px 10px rgba(27,79,138,.25)}
+.sb-title{font-family:var(--font-display);font-size:16px;font-weight:600;line-height:1.15;color:var(--text);letter-spacing:-0.01em}
+.sb-sub{font-size:10.5px;color:var(--text-muted);margin-top:1px;letter-spacing:0.02em}
+.sb-section{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);padding:14px 18px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 18px;cursor:pointer;transition:all .15s;position:relative;border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg-warm)}
+.nav-item.active{background:var(--primary-light);border-left-color:var(--primary)}
+.nav-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:var(--bg-warm)}
+.nav-item.active .nav-icon{background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.08)}
+.nav-label{font-family:var(--font-body);font-size:12.5px;font-weight:500;color:var(--text);letter-spacing:-0.01em}
+.nav-item.active .nav-label{color:var(--primary);font-weight:600}
+.nav-sub{font-size:10.5px;color:var(--text-muted);margin-top:0}
+
+/* ══════════ FILTER SECTION ══════════ */
+.filter-section{padding:12px 18px;border-bottom:1px solid var(--border)}
+.filter-section-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:8px}
+.filter-group{margin-bottom:10px}
+.filter-group-label{font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px}
+.filter-checks{display:flex;flex-wrap:wrap;gap:4px 8px}
+.filter-checks label{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:3px;cursor:pointer}
+.filter-checks label:hover{color:var(--text)}
+.filter-checks input[type="checkbox"]{accent-color:var(--primary);cursor:pointer;width:13px;height:13px}
+.filter-range-row{display:flex;gap:6px;align-items:center}
+.filter-range-row input[type="number"]{width:58px;padding:4px 6px;border:1px solid var(--border-strong);border-radius:5px;font-size:11px;font-family:var(--font-mono);text-align:center}
+.filter-range-row input[type="number"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light)}
+.filter-range-row span{font-size:10px;color:var(--text-dim)}
+.filter-count{font-family:var(--font-mono);font-size:11px;color:var(--primary);font-weight:600;padding:6px 0 2px;text-align:center;background:var(--primary-light);border-radius:var(--r-sm);margin-top:6px}
+
+/* ══════════ ACCORDION ══════════ */
+.accordion-header{display:flex;align-items:center;gap:8px;padding:10px 18px;cursor:pointer;transition:background .15s;user-select:none;border-bottom:1px solid var(--border)}
+.accordion-header:hover{background:var(--bg-warm)}
+.accordion-toggle{font-size:10px;color:var(--text-dim);transition:transform .2s;width:14px;text-align:center}
+.accordion-header.open .accordion-toggle{transform:rotate(90deg)}
+.accordion-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted)}
+.accordion-body{display:none;border-bottom:1px solid var(--border)}
+.accordion-body.open{display:block}
+
+/* ══════════ MAIN ══════════ */
+.main{margin-left:var(--sidebar-w);flex:1;padding:24px 32px 36px;max-width:calc(100% - var(--sidebar-w));min-width:0}
+.main-inner{max-width:var(--main-max);margin:0 auto}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeUp .22s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══════════ PANEL HEADER ══════════ */
+.panel-header{margin-bottom:16px;max-width:820px}
+.panel-eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent);font-weight:600;margin-bottom:4px}
+.panel-title{font-family:var(--font-display);font-size:26px;font-weight:600;line-height:1.1;letter-spacing:-0.02em;margin-bottom:4px}
+.panel-desc{color:var(--text-muted);font-size:13px;line-height:1.5}
+
+/* ══════════ CHART CARD ══════════ */
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;margin-bottom:14px;transition:box-shadow .3s}
+.chart-card:hover{box-shadow:var(--sh-md)}
+.cc-header{padding:16px 22px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.cc-header-text{flex:1;min-width:0}
+.cc-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent);font-weight:600;margin-bottom:3px}
+.cc-title{font-family:var(--font-display);font-size:20px;font-weight:600;line-height:1.15;color:var(--text);letter-spacing:-0.015em;margin-bottom:4px}
+.cc-subtitle{font-size:12.5px;color:var(--text-muted);line-height:1.5;max-width:760px}
+.cc-body{padding:12px 22px 6px}
+.cc-chart{width:100%;position:relative}
+.cc-controls{padding:10px 22px 12px;border-top:1px solid var(--border);background:var(--bg-warm)}
+.cc-footer{padding:8px 22px 12px}
+
+/* ══════════ BUTTONS ══════════ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .15s;font-family:var(--font-body);white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark)}
+.btn-secondary{background:#fff;color:var(--text);border-color:var(--border-strong)}
+.btn-secondary:hover{background:var(--bg-warm);border-color:var(--primary)}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success)}
+.btn-success:hover{background:#059669;border-color:#059669}
+.btn-danger{background:var(--error);color:#fff;border-color:var(--error)}
+.btn-danger:hover{background:#B91C1C;border-color:#B91C1C}
+.btn-ghost{background:transparent;color:var(--text-muted);border-color:transparent}
+.btn-ghost:hover{background:var(--bg-warm);color:var(--text)}
+
+/* ══════════ TOGGLE GROUP ══════════ */
+.toggle-group{display:inline-flex;background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px;gap:3px;box-shadow:var(--sh-sm)}
+.tog-btn{padding:7px 16px;border:none;background:none;border-radius:7px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text-muted);transition:all .15s;font-family:var(--font-body);letter-spacing:-0.005em}
+.tog-btn.active{background:var(--primary);color:#fff;box-shadow:0 2px 6px rgba(27,79,138,.2)}
+.tog-btn:not(.active):hover{background:var(--bg-warm);color:var(--text)}
+
+/* sub-tabs */
+.sub-tab-row{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding:0 22px;background:#fff;margin-bottom:0}
+.sub-tab-btn{padding:9px 14px 8px;border:none;background:none;cursor:pointer;font-family:var(--font-body);font-size:12px;font-weight:500;color:var(--text-muted);border-bottom:2.5px solid transparent;transition:all .15s}
+.sub-tab-btn:hover{color:var(--text)}
+.sub-tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* ══════════ STAT BOXES ══════════ */
+.stat-row{display:flex;gap:10px;margin:8px 0 0;flex-wrap:wrap}
+.stat-box{flex:1;min-width:110px;background:#fff;border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 12px;text-align:left;position:relative;overflow:hidden}
+.stat-box::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--primary)}
+.stat-box.stat-teal::before{background:var(--accent)}
+.stat-box.stat-red::before{background:var(--error)}
+.stat-box.stat-orange::before{background:var(--warning)}
+.stat-box.stat-green::before{background:var(--success)}
+.stat-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:2px;font-weight:600}
+.stat-val{font-size:18px;font-weight:500;font-family:var(--font-mono);color:var(--text);letter-spacing:-0.02em;line-height:1.1}
+.stat-sub{font-size:10px;color:var(--text-dim);margin-top:1px}
+
+/* ══════════ ALERTS ══════════ */
+.alert{padding:10px 14px;border-radius:var(--r-sm);font-size:12px;line-height:1.5;margin:8px 0;border-left:3px solid}
+.alert-info{background:var(--primary-light);color:#0F3966;border-left-color:var(--primary)}
+.alert-teal{background:var(--accent-light);color:#134E4A;border-left-color:var(--accent)}
+.alert-success{background:var(--success-light);color:#065F46;border-left-color:var(--success)}
+.alert-warning{background:var(--warning-light);color:#92400E;border-left-color:var(--warning)}
+.alert-error{background:var(--error-light);color:#991B1B;border-left-color:var(--error)}
+.alert strong{font-weight:600}
+
+/* ══════════ TABLES ══════════ */
+.ctable{width:100%;border-collapse:collapse;font-family:var(--font-body);font-size:12px;background:#fff;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--border)}
+.ctable th,.ctable td{border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:7px 12px;text-align:center}
+.ctable th:last-child,.ctable td:last-child{border-right:none}
+.ctable thead th{background:var(--bg-warm);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)}
+.ctable tbody th{background:var(--bg-warm);font-weight:600;text-align:left;color:var(--text);font-size:12px}
+.ctable td{font-family:var(--font-mono);font-weight:500;color:var(--text)}
+.ctable td.total,.ctable th.total,.ctable tr.total-row td,.ctable tr.total-row th{background:var(--primary-lighter);font-weight:600;color:var(--primary)}
+.ctable td .pct{display:block;font-size:10px;color:var(--text-muted);margin-top:1px;font-weight:400}
+.ctable .p-col{font-size:11px;font-weight:500}
+.ctable .p-sig{color:var(--success);font-weight:600}
+.ctable .p-ns{color:var(--text-muted)}
+
+/* ══════════ CHART SVG STYLES ══════════ */
+.cc-chart svg{display:block;width:100%;height:auto;overflow:visible}
+.axis-label{font-family:var(--font-body);font-size:12px;font-weight:500;fill:var(--text-muted)}
+.tick text{font-family:var(--font-mono);font-size:11px;fill:var(--text-muted)}
+.tick line{stroke:var(--border)}
+.domain{stroke:var(--border-strong)}
+.grid line{stroke:var(--border);stroke-dasharray:2 3;opacity:.6}
+.grid path{stroke-width:0}
+.annot-label{font-family:var(--font-body);font-size:11px;font-weight:600;fill:var(--text)}
+.annot-label-mono{font-family:var(--font-mono);font-size:11px;font-weight:600}
+
+/* ══════════ GRID LAYOUTS ══════════ */
+.grid-2x2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-1x2{display:grid;grid-template-columns:1fr 2fr;gap:14px}
+.controls-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+
+/* ══════════ CUSTOM SELECT / MULTI-SELECT ══════════ */
+.custom-select{position:relative;display:inline-block;min-width:200px}
+.custom-select select{width:100%;padding:7px 30px 7px 10px;border:1px solid var(--border-strong);border-radius:7px;font-size:12px;font-family:var(--font-body);color:var(--text);background:#fff;cursor:pointer;appearance:none;-webkit-appearance:none}
+.custom-select::after{content:'\25BC';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-dim);pointer-events:none}
+.custom-select select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light)}
+
+.multi-select-wrap{position:relative;display:inline-block;min-width:260px}
+.multi-select-btn{padding:7px 12px;border:1px solid var(--border-strong);border-radius:7px;font-size:12px;font-family:var(--font-body);color:var(--text);background:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;min-height:34px}
+.multi-select-btn:hover{border-color:var(--primary)}
+.multi-select-count{background:var(--primary);color:#fff;font-size:10px;font-weight:600;padding:1px 7px;border-radius:10px}
+.multi-select-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border-strong);border-radius:7px;box-shadow:var(--sh-md);z-index:200;max-height:260px;overflow-y:auto;display:none;padding:6px 0}
+.multi-select-dropdown.open{display:block}
+.multi-select-dropdown label{display:flex;align-items:center;gap:6px;padding:5px 12px;font-size:11.5px;cursor:pointer;transition:background .1s}
+.multi-select-dropdown label:hover{background:var(--bg-warm)}
+.multi-select-dropdown input[type="checkbox"]{accent-color:var(--primary);width:13px;height:13px}
+
+/* ══════════ RULE BUILDER ══════════ */
+.rule-builder{background:var(--bg-warm);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:14px}
+.rule-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.rule-row select,.rule-row input{padding:6px 10px;border:1px solid var(--border-strong);border-radius:6px;font-size:12px;font-family:var(--font-body)}
+.rule-row select:focus,.rule-row input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light)}
+.rule-list{list-style:none;padding:0}
+.rule-list li{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:12px}
+.rule-list li .rule-num{font-family:var(--font-mono);font-size:11px;color:var(--primary);font-weight:600;min-width:20px}
+.rule-list li .rule-text{flex:1;color:var(--text)}
+.rule-list li .rule-remove{background:none;border:none;color:var(--error);cursor:pointer;font-size:14px;padding:2px 4px}
+.rule-list li .rule-remove:hover{color:#B91C1C}
+
+/* ══════════ SPLIT PANEL ══════════ */
+.split-panel{display:grid;grid-template-columns:320px 1fr;gap:14px}
+.split-left{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;overflow-y:auto;max-height:700px}
+.split-right{min-width:0}
+.split-left .section-title{font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:8px;color:var(--text)}
+.split-left label{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;cursor:pointer}
+.split-left label input{accent-color:var(--primary)}
+
+/* ══════════ LOADING ══════════ */
+.loading-overlay{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-muted);font-size:14px;gap:10px}
+.spinner{width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══════════ RESPONSIVE ══════════ */
+@media(max-width:1100px){
+  .main{padding:32px 32px 80px}
+  .split-panel{grid-template-columns:1fr}
+  .grid-2x2{grid-template-columns:1fr}
+}
+@media(max-width:820px){
+  .sidebar{width:100%;height:auto;position:relative;border-right:none;border-bottom:1px solid var(--border);overflow-y:visible;box-shadow:none}
+  .mobile-tab-bar{display:flex !important;position:fixed;bottom:0;left:0;right:0;height:68px;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(15,23,42,.08);z-index:1000;overflow-x:auto}
+  .mobile-tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 6px;min-width:64px;cursor:pointer;border:none;background:none;color:var(--text-muted);font-size:10px;font-family:var(--font-body);font-weight:500;border-top:3px solid transparent;transition:all .15s}
+  .mobile-tab-btn.active{color:var(--primary);border-top-color:var(--primary);background:var(--primary-light)}
+  .mobile-tab-btn .mob-icon{font-size:18px}
+  .sidebar .sidebar-inner{display:none}
+  .sb-header{display:flex}
+  .main{margin-left:0;margin-bottom:80px;padding:20px 18px 40px;max-width:100%}
+  .panel-title{font-size:22px}
+  .cc-title{font-size:18px}
+  .stat-row{flex-direction:column}
+  .grid-2x2{grid-template-columns:1fr}
+  .split-panel{grid-template-columns:1fr}
+}
+@media(min-width:821px){
+  .mobile-tab-bar{display:none !important}
+  .mobile-filter-sheet{display:none !important}
+}
+@media(max-width:520px){
+  .stat-row{flex-direction:column}
+  .panel-title{font-size:20px}
+}
+
+/* ══════════ LEGEND ══════════ */
+.chart-legend{display:flex;gap:14px;align-items:center;padding:6px 0;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted)}
+.legend-swatch{width:12px;height:12px;border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏥</div>
+      <div>
+        <div class="sb-title">FinnEM Akatemia 2026</div>
+        <div class="sb-sub">Päivystyksen potilasvirta-analyysi</div>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-inner">
+    <!-- Filters - always visible -->
+    <div class="filter-section">
+      <div class="filter-section-title">Suodattimet</div>
+      <div class="filter-group">
+        <div class="filter-group-label">ESI-luokka</div>
+        <div class="filter-checks" id="filter-esi">
+          <label><input type="checkbox" value="1" checked> 1</label>
+          <label><input type="checkbox" value="2" checked> 2</label>
+          <label><input type="checkbox" value="3" checked> 3</label>
+          <label><input type="checkbox" value="4" checked> 4</label>
+          <label><input type="checkbox" value="5" checked> 5</label>
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-group-label">Ikä</div>
+        <div class="filter-range-row">
+          <input type="number" id="filter-age-min" value="18" min="18" max="110">
+          <span>–</span>
+          <input type="number" id="filter-age-max" value="110" min="18" max="110">
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-group-label">Sukupuoli</div>
+        <div class="filter-checks" id="filter-gender">
+          <label><input type="checkbox" value="Nainen" checked> Nainen</label>
+          <label><input type="checkbox" value="Mies" checked> Mies</label>
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-group-label">Saapumistapa</div>
+        <div class="filter-checks" id="filter-arrival">
+          <label><input type="checkbox" value="Auto" checked> Auto</label>
+          <label><input type="checkbox" value="Ambulanssi" checked> Ambulanssi</label>
+          <label><input type="checkbox" value="Kävellen" checked> Kävellen</label>
+          <label><input type="checkbox" value="Poliisi" checked> Poliisi</label>
+          <label><input type="checkbox" value="Julkinen liikenne" checked> Julkinen</label>
+          <label><input type="checkbox" value="Muu" checked> Muu</label>
+        </div>
+      </div>
+      <div class="filter-count" id="filter-count">n = 0 / 0</div>
+    </div>
+
+    <!-- Accordion: Yleiskatsaus -->
+    <div class="accordion-header open" data-acc="acc-overview">
+      <span class="accordion-toggle">▶</span>
+      <span class="accordion-title">Yleiskatsaus</span>
+    </div>
+    <div class="accordion-body open" id="acc-overview">
+      <div class="nav-item active" data-tab="summary" onclick="showTab('summary')">
+        <div class="nav-icon" style="background:var(--primary-light)">📊</div>
+        <div><div class="nav-label">Yhteenveto</div></div>
+      </div>
+    </div>
+
+    <!-- Accordion: Potilastiedot -->
+    <div class="accordion-header open" data-acc="acc-patient">
+      <span class="accordion-toggle">▶</span>
+      <span class="accordion-title">Potilastiedot</span>
+    </div>
+    <div class="accordion-body open" id="acc-patient">
+      <div class="nav-item" data-tab="age" onclick="showTab('age')">
+        <div class="nav-icon">📅</div>
+        <div><div class="nav-label">Ikä</div></div>
+      </div>
+      <div class="nav-item" data-tab="gender" onclick="showTab('gender')">
+        <div class="nav-icon">👤</div>
+        <div><div class="nav-label">Sukupuoli</div></div>
+      </div>
+      <div class="nav-item" data-tab="marital" onclick="showTab('marital')">
+        <div class="nav-icon">💍</div>
+        <div><div class="nav-label">Siviilisääty</div></div>
+      </div>
+      <div class="nav-item" data-tab="employment" onclick="showTab('employment')">
+        <div class="nav-icon">💼</div>
+        <div><div class="nav-label">Työllisyys</div></div>
+      </div>
+    </div>
+
+    <!-- Accordion: Käyntitiedot -->
+    <div class="accordion-header open" data-acc="acc-visit">
+      <span class="accordion-toggle">▶</span>
+      <span class="accordion-title">Käyntitiedot</span>
+    </div>
+    <div class="accordion-body open" id="acc-visit">
+      <div class="nav-item" data-tab="arrival-time" onclick="showTab('arrival-time')">
+        <div class="nav-icon">🕐</div>
+        <div><div class="nav-label">Saapumisaika</div></div>
+      </div>
+      <div class="nav-item" data-tab="arrival-mode" onclick="showTab('arrival-mode')">
+        <div class="nav-icon">🚑</div>
+        <div><div class="nav-label">Saapumistapa</div></div>
+      </div>
+      <div class="nav-item" data-tab="esi" onclick="showTab('esi')">
+        <div class="nav-icon">🔢</div>
+        <div><div class="nav-label">ESI-luokka</div></div>
+      </div>
+      <div class="nav-item" data-tab="complaints" onclick="showTab('complaints')">
+        <div class="nav-icon">🩺</div>
+        <div><div class="nav-label">Tulosyyt</div></div>
+      </div>
+      <div class="nav-item" data-tab="prev-visits" onclick="showTab('prev-visits')">
+        <div class="nav-icon">🔄</div>
+        <div><div class="nav-label">Aiemmat käynnit</div></div>
+      </div>
+    </div>
+
+    <!-- Accordion: Kliiniset tiedot -->
+    <div class="accordion-header open" data-acc="acc-clinical">
+      <span class="accordion-toggle">▶</span>
+      <span class="accordion-title">Kliiniset tiedot</span>
+    </div>
+    <div class="accordion-body open" id="acc-clinical">
+      <div class="nav-item" data-tab="vitals" onclick="showTab('vitals')">
+        <div class="nav-icon">❤️</div>
+        <div><div class="nav-label">Vitaalielintoiminnot</div></div>
+      </div>
+      <div class="nav-item" data-tab="imaging" onclick="showTab('imaging')">
+        <div class="nav-icon">📷</div>
+        <div><div class="nav-label">Kuvantaminen</div></div>
+      </div>
+      <div class="nav-item" data-tab="labs" onclick="showTab('labs')">
+        <div class="nav-icon">🧪</div>
+        <div><div class="nav-label">Laboratoriotestit</div></div>
+      </div>
+      <div class="nav-item" data-tab="meds" onclick="showTab('meds')">
+        <div class="nav-icon">💊</div>
+        <div><div class="nav-label">Lääkitys</div></div>
+      </div>
+    </div>
+
+    <!-- Accordion: Analyysit -->
+    <div class="accordion-header open" data-acc="acc-analysis">
+      <span class="accordion-toggle">▶</span>
+      <span class="accordion-title">Analyysit</span>
+    </div>
+    <div class="accordion-body open" id="acc-analysis">
+      <div class="nav-item" data-tab="summary-table" onclick="showTab('summary-table')">
+        <div class="nav-icon">📋</div>
+        <div><div class="nav-label">Yhteenvetotaulukko</div></div>
+      </div>
+      <div class="nav-item" data-tab="rule-model" onclick="showTab('rule-model')">
+        <div class="nav-icon">🔧</div>
+        <div><div class="nav-label">Oma sääntöpohjainen malli</div></div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile tab bar -->
+<div class="mobile-tab-bar" id="mobile-tab-bar">
+  <button class="mobile-tab-btn active" data-section="overview" onclick="mobileSection('overview')">
+    <span class="mob-icon">📊</span>Yleiskatsaus
+  </button>
+  <button class="mobile-tab-btn" data-section="patient" onclick="mobileSection('patient')">
+    <span class="mob-icon">👤</span>Potilastiedot
+  </button>
+  <button class="mobile-tab-btn" data-section="visit" onclick="mobileSection('visit')">
+    <span class="mob-icon">🏥</span>Käyntitiedot
+  </button>
+  <button class="mobile-tab-btn" data-section="clinical" onclick="mobileSection('clinical')">
+    <span class="mob-icon">❤️</span>Kliiniset
+  </button>
+  <button class="mobile-tab-btn" data-section="analysis" onclick="mobileSection('analysis')">
+    <span class="mob-icon">🔧</span>Analyysit
+  </button>
+</div>
+
+<main class="main">
+  <div class="main-inner">
+    <div class="tab-panel active" id="panel-summary"></div>
+    <div class="tab-panel" id="panel-age"></div>
+    <div class="tab-panel" id="panel-gender"></div>
+    <div class="tab-panel" id="panel-marital"></div>
+    <div class="tab-panel" id="panel-employment"></div>
+    <div class="tab-panel" id="panel-arrival-time"></div>
+    <div class="tab-panel" id="panel-arrival-mode"></div>
+    <div class="tab-panel" id="panel-esi"></div>
+    <div class="tab-panel" id="panel-complaints"></div>
+    <div class="tab-panel" id="panel-prev-visits"></div>
+    <div class="tab-panel" id="panel-vitals"></div>
+    <div class="tab-panel" id="panel-imaging"></div>
+    <div class="tab-panel" id="panel-labs"></div>
+    <div class="tab-panel" id="panel-meds"></div>
+    <div class="tab-panel" id="panel-summary-table"></div>
+    <div class="tab-panel" id="panel-rule-model"></div>
+  </div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// VARIABLE METADATA
+// ═══════════════════════════════════════════════════════
+const GROUP_LABELS = {
+  lopputulos: "Hoidon lopputulos",
+  taustatiedot: "Taustatiedot",
+  kaynti: "Käynnin tiedot",
+  vitaalit_triage: "Vitaalit (triage)",
+  vitaalit_viim: "Vitaalit (viimeisin)",
+  laboratorio: "Laboratorio",
+  historia: "Historia",
+  tulosyyt: "Tulosyyt",
+  kuvantaminen: "Kuvantaminen",
+  laakitys: "Lääkitys"
+};
+
+const VARS = {
+  dispo: {label:"Hoidon lopputulos", type:"cat", group:"lopputulos", levels:["Kotiutunut","Osastolle"]},
+  ika: {label:"Ikä (v)", type:"cont", group:"taustatiedot"},
+  sukupuoli: {label:"Sukupuoli", type:"cat", group:"taustatiedot", levels:["Nainen","Mies"]},
+  siviilisaaty: {label:"Siviilisääty", type:"cat", group:"taustatiedot", levels:["Naimaton","Naimisissa","Eronnut","Leski","Muu/Tuntematon"]},
+  tyollisyys: {label:"Työllisyys", type:"cat", group:"taustatiedot", levels:["Työssä","Työtön","Eläkeläinen","Työkyvytön","Opiskelija","Muu/Tuntematon"]},
+  esi: {label:"ESI-luokka", type:"ordinal", group:"kaynti", levels:["1","2","3","4","5"]},
+  saapumistapa: {label:"Saapumistapa", type:"cat", group:"kaynti", levels:["Auto","Ambulanssi","Kävellen","Poliisi","Julkinen liikenne","Muu"]},
+  viikonpaiva: {label:"Viikonpäivä", type:"cat", group:"kaynti", levels:["Ma","Ti","Ke","To","Pe","La","Su"]},
+  kellonaika: {label:"Kellonaika", type:"cat", group:"kaynti", levels:["00-03","03-07","07-10","10-14","14-17","17-20","20-00"]},
+  kuukausi: {label:"Kuukausi", type:"cat", group:"kaynti", levels:["Tammi","Helmi","Maalis","Huhti","Touko","Kesä","Heinä","Elo","Syys","Loka","Marras","Joulu"]},
+  aiemmat_kaynti: {label:"Aiemmat päivystyskäynnit", type:"cont", group:"historia"},
+  aiemmat_osasto: {label:"Aiemmat osastojaksot", type:"cont", group:"historia"},
+  edellinen_lopputulos: {label:"Edellinen lopputulos", type:"cat", group:"historia", levels:["Kotiutunut","Osastolle","Ei aiempaa"]},
+  // Triage vitals
+  tr_syke: {label:"Syke (triage)", type:"cont", group:"vitaalit_triage"},
+  tr_sys: {label:"Syst. RR (triage)", type:"cont", group:"vitaalit_triage"},
+  tr_dia: {label:"Diast. RR (triage)", type:"cont", group:"vitaalit_triage"},
+  tr_hengitys: {label:"Hengitystaajuus (triage)", type:"cont", group:"vitaalit_triage"},
+  tr_spo2: {label:"SpO\u2082 (triage)", type:"cont", group:"vitaalit_triage"},
+  tr_lampo: {label:"Lämpö °C (triage)", type:"cont", group:"vitaalit_triage"},
+  // Last vitals
+  vi_syke: {label:"Syke (viim.)", type:"cont", group:"vitaalit_viim"},
+  vi_sys: {label:"Syst. RR (viim.)", type:"cont", group:"vitaalit_viim"},
+  vi_dia: {label:"Diast. RR (viim.)", type:"cont", group:"vitaalit_viim"},
+  vi_hengitys: {label:"Hengitystaajuus (viim.)", type:"cont", group:"vitaalit_viim"},
+  vi_spo2: {label:"SpO\u2082 (viim.)", type:"cont", group:"vitaalit_viim"},
+  vi_lampo: {label:"Lämpö °C (viim.)", type:"cont", group:"vitaalit_viim"},
+  // Labs
+  lab_valkos: {label:"Valkosolut (E9/L)", type:"cont", group:"laboratorio"},
+  lab_hb: {label:"Hemoglobiini (g/L)", type:"cont", group:"laboratorio"},
+  lab_hkr: {label:"Hematokriitti (%)", type:"cont", group:"laboratorio"},
+  lab_trom: {label:"Trombosyytit (E9/L)", type:"cont", group:"laboratorio"},
+  lab_gluk: {label:"Glukoosi (mmol/L)", type:"cont", group:"laboratorio"},
+  lab_krea: {label:"Kreatiniini (\u00b5mol/L)", type:"cont", group:"laboratorio"},
+  lab_urea: {label:"Urea (mmol/L)", type:"cont", group:"laboratorio"},
+  lab_na: {label:"Natrium (mmol/L)", type:"cont", group:"laboratorio"},
+  lab_k: {label:"Kalium (mmol/L)", type:"cont", group:"laboratorio"},
+  lab_cl: {label:"Kloridi (mmol/L)", type:"cont", group:"laboratorio"},
+  lab_lakt: {label:"Laktaatti (mmol/L)", type:"cont", group:"laboratorio"},
+  lab_tnt: {label:"Troponiini T (ng/L)", type:"cont", group:"laboratorio"},
+  lab_ck: {label:"CK (U/L)", type:"cont", group:"laboratorio"},
+  // Imaging
+  kuv_thorax: {label:"Thorax-rtg", type:"binary", group:"kuvantaminen"},
+  kuv_ekg: {label:"EKG", type:"binary", group:"kuvantaminen"},
+  kuv_paa_tt: {label:"Pään TT", type:"binary", group:"kuvantaminen"},
+  kuv_muu_tt: {label:"Muu TT", type:"binary", group:"kuvantaminen"},
+  kuv_echo: {label:"Ultraääni (sydän)", type:"binary", group:"kuvantaminen"},
+  kuv_muu_uu: {label:"Muu ultraääni", type:"binary", group:"kuvantaminen"},
+  kuv_muu_rtg: {label:"Muu röntgen", type:"binary", group:"kuvantaminen"},
+  kuv_mri: {label:"MRI", type:"binary", group:"kuvantaminen"},
+  kuv_muu: {label:"Muu kuvantaminen", type:"binary", group:"kuvantaminen"},
+  // Chief complaints
+  ts_vatsakipu: {label:"Vatsakipu", type:"binary", group:"tulosyyt"},
+  ts_muusyy: {label:"Muu syy", type:"binary", group:"tulosyyt"},
+  ts_rintakipu: {label:"Rintakipu", type:"binary", group:"tulosyyt"},
+  ts_hengenahdistus: {label:"Hengenahdistus", type:"binary", group:"tulosyyt"},
+  ts_selkkipu: {label:"Selkäkipu", type:"binary", group:"tulosyyt"},
+  ts_kaatuminen: {label:"Kaatuminen", type:"binary", group:"tulosyyt"},
+  ts_alkoholipihtymys: {label:"Alkoholipäihtymys", type:"binary", group:"tulosyyt"},
+  ts_liikenneonnettomuus: {label:"Liikenneonnettomuus", type:"binary", group:"tulosyyt"},
+  ts_huimaus: {label:"Huimaus", type:"binary", group:"tulosyyt"},
+  ts_ysk: {label:"Yskä", type:"binary", group:"tulosyyt"},
+  ts_oksentelu: {label:"Oksentelu", type:"binary", group:"tulosyyt"},
+  ts_jalkakipu: {label:"Jalkakipu", type:"binary", group:"tulosyyt"},
+  ts_pnsrky: {label:"Päänsärky", type:"binary", group:"tulosyyt"},
+  ts_kylkikipu: {label:"Kylkikipu", type:"binary", group:"tulosyyt"},
+  ts_itsetuhoisuus: {label:"Itsetuhoisuus", type:"binary", group:"tulosyyt"},
+  ts_tajunnantasonmuutos: {label:"Tajunnantason muutos", type:"binary", group:"tulosyyt"},
+  ts_kaatuminenv: {label:"Kaatuminen >65v", type:"binary", group:"tulosyyt"},
+  ts_heikkous: {label:"Heikkous", type:"binary", group:"tulosyyt"},
+  ts_kurkkukipu: {label:"Kurkkukipu", type:"binary", group:"tulosyyt"},
+  ts_polvikipu: {label:"Polvikipu", type:"binary", group:"tulosyyt"},
+  ts_psykiatrinenarvio: {label:"Psykiatrinen arvio", type:"binary", group:"tulosyyt"},
+  ts_kuume: {label:"Kuume", type:"binary", group:"tulosyyt"},
+  ts_ihottuma: {label:"Ihottuma", type:"binary", group:"tulosyyt"},
+  ts_yleinenongelma: {label:"Yleinen ongelma", type:"binary", group:"tulosyyt"},
+  ts_pahoinvointi: {label:"Pahoinvointi", type:"binary", group:"tulosyyt"},
+  ts_pyrtyminen: {label:"Pyörtyminen", type:"binary", group:"tulosyyt"},
+  ts_jalkaterkipu: {label:"Jalkateräkipu", type:"binary", group:"tulosyyt"},
+  ts_hammassrky: {label:"Hammassärky", type:"binary", group:"tulosyyt"},
+  ts_jalanturvotus: {label:"Jalan turvotus", type:"binary", group:"tulosyyt"},
+  ts_olkapkipu: {label:"Olkapääkipu", type:"binary", group:"tulosyyt"},
+  // Medications
+  laake_sydnverisuoni: {label:"Sydän- ja verisuoni", type:"binary", group:"laakitys"},
+  laake_kipulke: {label:"Kipulääke", type:"binary", group:"laakitys"},
+  laake_ruoansulatus: {label:"Ruoansulatuslääke", type:"binary", group:"laakitys"},
+  laake_psyykelke: {label:"Psyykenlääke", type:"binary", group:"laakitys"},
+  laake_vitamiini: {label:"Vitamiini", type:"binary", group:"laakitys"},
+  laake_keskushermosto: {label:"Keskushermostolääke", type:"binary", group:"laakitys"},
+  laake_antibiootti: {label:"Antibiootti", type:"binary", group:"laakitys"},
+  laake_hormoni: {label:"Hormoni", type:"binary", group:"laakitys"},
+  laake_elektrolyytti: {label:"Elektrolyytti", type:"binary", group:"laakitys"},
+  laake_diabeteslke: {label:"Diabeteslääke", type:"binary", group:"laakitys"},
+  laake_nesteenpoisto: {label:"Nesteenpoistolääke", type:"binary", group:"laakitys"},
+  laake_iholke: {label:"Iholääke", type:"binary", group:"laakitys"},
+  laake_verihiutaleestj: {label:"Verihiutale-estäjä", type:"binary", group:"laakitys"},
+  laake_astmalke: {label:"Astmalääke", type:"binary", group:"laakitys"},
+  laake_unirauhoittava: {label:"Uni-/rauhoittava", type:"binary", group:"laakitys"},
+  laake_kilpirauhaslke: {label:"Kilpirauhaslääke", type:"binary", group:"laakitys"},
+  laake_autonominenherm: {label:"Autonomisen herm. lääke", type:"binary", group:"laakitys"},
+  laake_silmkorvanen: {label:"Silmä-/korva-/nenälääke", type:"binary", group:"laakitys"},
+  laake_verenohennuslke: {label:"Verenohennuslääke", type:"binary", group:"laakitys"},
+  laake_nivellke: {label:"Nivellääke", type:"binary", group:"laakitys"}
+};
+
+const DISPO_COLORS = {Osastolle:"#1B4F8A", Kotiutunut:"#0D9488"};
+
+// ═══════════════════════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════════════════════
+let RAW_DATA = [];
+let FILTERED = [];
+let activeTab = 'summary';
+const panelBuilt = {};
+
+// ═══════════════════════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════════════════════
+fetch('ed_data.json')
+  .then(r => r.json())
+  .then(data => {
+    RAW_DATA = data;
+    applyFilters();
+    showTab('summary');
+  })
+  .catch(e => {
+    document.querySelector('.main-inner').innerHTML = '<div class="alert alert-error"><strong>Virhe:</strong> Tietojen lataus epäonnistui. Varmista, että ed_data.json on samassa kansiossa.</div>';
+  });
+
+// ═══════════════════════════════════════════════════════
+// FILTERING
+// ═══════════════════════════════════════════════════════
+function getCheckedValues(containerId) {
+  return [...document.querySelectorAll('#'+containerId+' input[type="checkbox"]:checked')].map(cb => cb.value);
+}
+function getAllValues(containerId) {
+  return [...document.querySelectorAll('#'+containerId+' input[type="checkbox"]')].map(cb => cb.value);
+}
+
+function applyFilters() {
+  const esiChecked = getCheckedValues('filter-esi');
+  const esiAll = getAllValues('filter-esi');
+  const allEsiChecked = esiChecked.length === esiAll.length;
+
+  const ageMin = parseInt(document.getElementById('filter-age-min').value) || 18;
+  const ageMax = parseInt(document.getElementById('filter-age-max').value) || 110;
+  const genderChecked = getCheckedValues('filter-gender');
+  const genderAll = getAllValues('filter-gender');
+  const allGenderChecked = genderChecked.length === genderAll.length;
+
+  const arrivalChecked = getCheckedValues('filter-arrival');
+  const arrivalAll = getAllValues('filter-arrival');
+  const allArrivalChecked = arrivalChecked.length === arrivalAll.length;
+
+  FILTERED = RAW_DATA.filter(d => {
+    // ESI: if all checked, include nulls
+    if (!allEsiChecked) {
+      if (d.esi == null) return false;
+      if (!esiChecked.includes(String(d.esi))) return false;
+    }
+    // Age
+    if (d.ika < ageMin || d.ika > ageMax) return false;
+    // Gender
+    if (!allGenderChecked) {
+      if (!genderChecked.includes(d.sukupuoli)) return false;
+    }
+    // Arrival
+    if (!allArrivalChecked) {
+      if (!arrivalChecked.includes(d.saapumistapa)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('filter-count').textContent = `n = ${FILTERED.length} / ${RAW_DATA.length}`;
+  // Re-render current tab
+  Object.keys(panelBuilt).forEach(k => panelBuilt[k] = false);
+  renderCurrentTab();
+}
+
+// Attach filter listeners
+document.querySelectorAll('.filter-section input').forEach(inp => {
+  inp.addEventListener('change', () => applyFilters());
+  inp.addEventListener('input', () => { if(inp.type==='number') applyFilters(); });
+});
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showTab(tabId) {
+  activeTab = tabId;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const panel = document.getElementById('panel-' + tabId);
+  const navItem = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
+  if (panel) panel.classList.add('active');
+  if (navItem) navItem.classList.add('active');
+  renderCurrentTab();
+}
+
+function renderCurrentTab() {
+  if (!RAW_DATA.length) return;
+  if (panelBuilt[activeTab]) return;
+  panelBuilt[activeTab] = true;
+  const builders = {
+    'summary': buildSummary,
+    'age': buildAge,
+    'gender': () => buildCategorical('gender', 'sukupuoli'),
+    'marital': () => buildCategorical('marital', 'siviilisaaty'),
+    'employment': () => buildCategorical('employment', 'tyollisyys'),
+    'arrival-time': buildArrivalTime,
+    'arrival-mode': () => buildCategorical('arrival-mode', 'saapumistapa'),
+    'esi': () => buildCategorical('esi', 'esi'),
+    'complaints': buildComplaints,
+    'prev-visits': buildPrevVisits,
+    'vitals': buildVitals,
+    'imaging': buildImaging,
+    'labs': buildLabs,
+    'meds': buildMeds,
+    'summary-table': buildSummaryTable,
+    'rule-model': buildRuleModel
+  };
+  if (builders[activeTab]) builders[activeTab]();
+}
+
+// Accordion toggles
+document.querySelectorAll('.accordion-header').forEach(h => {
+  h.addEventListener('click', () => {
+    const bodyId = h.dataset.acc;
+    const body = document.getElementById(bodyId);
+    h.classList.toggle('open');
+    body.classList.toggle('open');
+  });
+});
+
+// Mobile section switching
+function mobileSection(section) {
+  document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.mobile-tab-btn[data-section="${section}"]`).classList.add('active');
+  const sectionTabs = {
+    overview: 'summary',
+    patient: 'age',
+    visit: 'arrival-time',
+    clinical: 'vitals',
+    analysis: 'summary-table'
+  };
+  showTab(sectionTabs[section]);
+}
+
+// ═══════════════════════════════════════════════════════
+// STAT/MATH UTILITIES
+// ═══════════════════════════════════════════════════════
+function mean(a) { return a.reduce((s,v) => s+v, 0) / a.length; }
+function median(a) { const s=[...a].sort((x,y)=>x-y), m=Math.floor(s.length/2); return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+function std(a) { const m=mean(a); return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1)); }
+function quantile(a, q) { const s=[...a].sort((x,y)=>x-y), pos=(s.length-1)*q, base=Math.floor(pos), rest=pos-base; return s[base+1]!==undefined ? s[base]+rest*(s[base+1]-s[base]) : s[base]; }
+function skewness(a) { const m=mean(a), s=std(a), n=a.length; if(s===0) return 0; return (n/((n-1)*(n-2)))*a.reduce((sum,v)=>sum+((v-m)/s)**3,0); }
+
+function fmtP(p) {
+  if (p < 0.001) return 'p < 0,001';
+  return 'p = ' + p.toFixed(3).replace('.', ',');
+}
+function fmtNum(x, d=1) { return x.toFixed(d).replace('.', ','); }
+function fmtInt(x) { return Math.round(x).toLocaleString('fi-FI'); }
+function pctStr(n, total) { return total === 0 ? '0' : fmtNum(100*n/total, 1); }
+
+// Percentile filtering
+function filterPercentile(arr, lo=0.01, hi=0.99) {
+  if (arr.length < 5) return arr;
+  const sorted = [...arr].sort((a,b)=>a-b);
+  const pLo = sorted[Math.floor(sorted.length * lo)];
+  const pHi = sorted[Math.ceil(sorted.length * hi) - 1];
+  return arr.filter(v => v >= pLo && v <= pHi);
+}
+
+// ═══════════════════════════════════════════════════════
+// STATISTICAL TESTS
+// ═══════════════════════════════════════════════════════
+function chiSquareTest(contingency) {
+  // contingency: [{group, category, count}]
+  const groups = [...new Set(contingency.map(c=>c.group))];
+  const cats = [...new Set(contingency.map(c=>c.category))];
+  const matrix = {};
+  groups.forEach(g => { matrix[g] = {}; cats.forEach(c => matrix[g][c] = 0); });
+  contingency.forEach(c => { matrix[c.group][c.category] = c.count; });
+  const rowTotals = {};
+  groups.forEach(g => { rowTotals[g] = cats.reduce((s,c)=>s+matrix[g][c],0); });
+  const colTotals = {};
+  cats.forEach(c => { colTotals[c] = groups.reduce((s,g)=>s+matrix[g][c],0); });
+  const N = groups.reduce((s,g)=>s+rowTotals[g],0);
+  if(N===0) return {p:1};
+  let chi2 = 0;
+  const df = (groups.length-1)*(cats.length-1);
+  if(df===0) return {p:1};
+  groups.forEach(g => {
+    cats.forEach(c => {
+      const E = rowTotals[g]*colTotals[c]/N;
+      if(E > 0) chi2 += (matrix[g][c]-E)**2/E;
+    });
+  });
+  const p = 1 - jStat.chisquare.cdf(chi2, df);
+  return {p};
+}
+
+function welchTTest(g1, g2) {
+  const n1=g1.length, n2=g2.length;
+  if(n1<2||n2<2) return {p:1};
+  const m1=mean(g1), m2=mean(g2);
+  const v1=g1.reduce((s,v)=>s+(v-m1)**2,0)/(n1-1);
+  const v2=g2.reduce((s,v)=>s+(v-m2)**2,0)/(n2-1);
+  const se = Math.sqrt(v1/n1 + v2/n2);
+  if(se===0) return {p:1};
+  const t = (m1-m2)/se;
+  const df = (v1/n1+v2/n2)**2 / ((v1/n1)**2/(n1-1) + (v2/n2)**2/(n2-1));
+  const p = 2*(1-jStat.studentt.cdf(Math.abs(t), df));
+  return {p};
+}
+
+function mannWhitneyU(g1, g2) {
+  const n1=g1.length, n2=g2.length;
+  if(n1<1||n2<1) return {p:1};
+  const all = g1.map(v=>({v,g:0})).concat(g2.map(v=>({v,g:1})));
+  all.sort((a,b)=>a.v-b.v);
+  // Assign ranks with tie correction
+  let i=0;
+  while(i<all.length) {
+    let j=i;
+    while(j<all.length && all[j].v===all[i].v) j++;
+    const rank = (i+1+j)/2;
+    for(let k=i;k<j;k++) all[k].rank = rank;
+    i=j;
+  }
+  const R1 = all.filter(a=>a.g===0).reduce((s,a)=>s+a.rank,0);
+  const U1 = R1 - n1*(n1+1)/2;
+  const mU = n1*n2/2;
+  // Tie correction
+  const tieCounts = {};
+  all.forEach(a => { tieCounts[a.v] = (tieCounts[a.v]||0)+1; });
+  const N = n1+n2;
+  let tieCorr = 0;
+  Object.values(tieCounts).forEach(t => { if(t>1) tieCorr += (t**3-t); });
+  const sigma = Math.sqrt((n1*n2/12)*((N+1) - tieCorr/(N*(N-1))));
+  if(sigma===0) return {p:1};
+  const z = (U1 - mU)/sigma;
+  const p = 2*(1-jStat.normal.cdf(Math.abs(z),0,1));
+  return {p};
+}
+
+function autoTest(varKey, data) {
+  const info = VARS[varKey];
+  if (!info) return {p:1};
+  const g1 = data.filter(d=>d.dispo==='Kotiutunut').map(d=>d[varKey]).filter(v=>v!=null);
+  const g2 = data.filter(d=>d.dispo==='Osastolle').map(d=>d[varKey]).filter(v=>v!=null);
+  if (info.type==='cat' || info.type==='ordinal' || info.type==='binary') {
+    // Chi-square
+    const levels = info.type==='binary' ? ['0','1'] : (info.levels || [...new Set(data.map(d=>d[varKey]).filter(v=>v!=null))]);
+    const contingency = [];
+    ['Kotiutunut','Osastolle'].forEach(grp => {
+      const sub = data.filter(d=>d.dispo===grp);
+      levels.forEach(lev => {
+        const count = sub.filter(d => String(d[varKey])===String(lev)).length;
+        contingency.push({group:grp, category:String(lev), count});
+      });
+    });
+    return chiSquareTest(contingency);
+  } else {
+    // Continuous
+    if(g1.length<2||g2.length<2) return {p:1};
+    const sk = Math.abs(skewness([...g1,...g2]));
+    if(sk > 1) return mannWhitneyU(g1,g2);
+    return welchTTest(g1,g2);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CHART UTILITIES
+// ═══════════════════════════════════════════════════════
+function getContainerWidth(containerId) {
+  const el = document.getElementById(containerId);
+  return el ? el.clientWidth : 600;
+}
+
+function clearChart(containerId) {
+  const el = document.getElementById(containerId);
+  if (el) el.innerHTML = '';
+}
+
+const MARGIN = {top:20, right:20, bottom:50, left:60};
+
+function drawStackedBar(containerId, data, xVar, fillVar, mode, xLevels, fillLevels) {
+  clearChart(containerId);
+  const width = getContainerWidth(containerId);
+  if (width < 50) return;
+  const height = Math.min(360, Math.max(240, width * 0.5));
+  const m = {top:20, right:20, bottom:60, left:55};
+  const w = width - m.left - m.right;
+  const h = height - m.top - m.bottom;
+
+  // Count data
+  const counts = {};
+  xLevels.forEach(x => {
+    counts[x] = {};
+    fillLevels.forEach(f => counts[x][f] = 0);
+  });
+  data.forEach(d => {
+    const xVal = String(d[xVar] ?? 'null');
+    const fVal = d[fillVar];
+    if (counts[xVal] && counts[xVal][fVal] !== undefined) counts[xVal][fVal]++;
+  });
+
+  const svg = d3.select('#'+containerId).append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet');
+  const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+
+  const x = d3.scaleBand().domain(xLevels).range([0,w]).padding(0.25);
+
+  if (mode === 'count') {
+    const maxVal = d3.max(xLevels, xl => fillLevels.reduce((s,f)=>s+counts[xl][f],0));
+    const y = d3.scaleLinear().domain([0, maxVal*1.1 || 1]).range([h,0]);
+    // Grid
+    g.append('g').attr('class','grid').call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(''));
+    // Bars
+    xLevels.forEach(xl => {
+      let y0 = 0;
+      fillLevels.forEach(fl => {
+        const val = counts[xl][fl];
+        if (val > 0) {
+          g.append('rect')
+            .attr('x', x(xl)).attr('y', y(y0+val)).attr('width', x.bandwidth())
+            .attr('height', y(y0)-y(y0+val))
+            .attr('fill', DISPO_COLORS[fl] || '#999').attr('rx',2);
+          // Label
+          const bh = y(y0)-y(y0+val);
+          if (bh > 14) {
+            g.append('text').attr('x', x(xl)+x.bandwidth()/2).attr('y', y(y0+val)+bh/2+4)
+              .attr('text-anchor','middle').attr('fill','#fff').attr('font-size','11px')
+              .attr('font-family','var(--font-mono)').attr('font-weight','600')
+              .text(val);
+          }
+        }
+        y0 += val;
+      });
+    });
+    g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x)).selectAll('text').attr('font-size','11px');
+    g.append('g').call(d3.axisLeft(y).ticks(5));
+  } else {
+    // Percentage mode
+    const y = d3.scaleLinear().domain([0,100]).range([h,0]);
+    g.append('g').attr('class','grid').call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(''));
+    xLevels.forEach(xl => {
+      const total = fillLevels.reduce((s,f)=>s+counts[xl][f],0);
+      if (total === 0) return;
+      let y0 = 0;
+      fillLevels.forEach(fl => {
+        const pct = 100*counts[xl][fl]/total;
+        if (pct > 0) {
+          g.append('rect')
+            .attr('x', x(xl)).attr('y', y(y0+pct)).attr('width', x.bandwidth())
+            .attr('height', y(y0)-y(y0+pct))
+            .attr('fill', DISPO_COLORS[fl] || '#999').attr('rx',2);
+          const bh = y(y0)-y(y0+pct);
+          if (bh > 14) {
+            g.append('text').attr('x', x(xl)+x.bandwidth()/2).attr('y', y(y0+pct)+bh/2+4)
+              .attr('text-anchor','middle').attr('fill','#fff').attr('font-size','10px')
+              .attr('font-family','var(--font-mono)').attr('font-weight','600')
+              .text(fmtNum(pct,0)+'%');
+          }
+        }
+        y0 += pct;
+      });
+    });
+    g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x)).selectAll('text').attr('font-size','11px');
+    g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d=>d+'%'));
+  }
+
+  // Legend
+  const legend = svg.append('g').attr('transform',`translate(${m.left},${height-12})`);
+  fillLevels.forEach((fl,i) => {
+    const lg = legend.append('g').attr('transform',`translate(${i*120},0)`);
+    lg.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',DISPO_COLORS[fl]||'#999');
+    lg.append('text').attr('x',16).attr('y',10).attr('font-size','11px').attr('fill','var(--text-muted)')
+      .attr('font-family','var(--font-body)').text(fl);
+  });
+}
+
+function drawBoxplot(containerId, data, contVar, groupVar, groups) {
+  clearChart(containerId);
+  const width = getContainerWidth(containerId);
+  if (width < 50) return;
+  const height = Math.max(200, groups.length * 80 + 60);
+  const m = {top:15, right:30, bottom:40, left:90};
+  const w = width - m.left - m.right;
+  const h = height - m.top - m.bottom;
+
+  const allVals = data.map(d => d[contVar]).filter(v => v != null);
+  const filteredAll = filterPercentile(allVals);
+  if (filteredAll.length === 0) return;
+  const xMin = d3.min(filteredAll);
+  const xMax = d3.max(filteredAll);
+
+  const svg = d3.select('#'+containerId).append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet');
+  const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+
+  const x = d3.scaleLinear().domain([xMin, xMax]).nice().range([0, w]);
+  const y = d3.scaleBand().domain(groups).range([0, h]).padding(0.35);
+
+  g.append('g').attr('class','grid').call(d3.axisBottom(x).ticks(6).tickSize(h).tickFormat(''));
+  g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).ticks(6));
+  g.append('g').call(d3.axisLeft(y));
+
+  groups.forEach(grp => {
+    let vals = data.filter(d => d[groupVar] === grp).map(d => d[contVar]).filter(v => v != null);
+    vals = filterPercentile(vals);
+    if (vals.length < 5) return;
+    const sorted = [...vals].sort((a,b)=>a-b);
+    const q1 = quantile(vals, 0.25);
+    const med = quantile(vals, 0.5);
+    const q3 = quantile(vals, 0.75);
+    const iqr = q3 - q1;
+    const wLo = Math.max(d3.min(sorted), q1 - 1.5*iqr);
+    const wHi = Math.min(d3.max(sorted), q3 + 1.5*iqr);
+    const color = DISPO_COLORS[grp] || '#666';
+    const cy = y(grp) + y.bandwidth()/2;
+    const bh = y.bandwidth() * 0.7;
+
+    // Whisker line
+    g.append('line').attr('x1',x(wLo)).attr('x2',x(wHi)).attr('y1',cy).attr('y2',cy)
+      .attr('stroke',color).attr('stroke-width',1.5);
+    // Whisker caps
+    g.append('line').attr('x1',x(wLo)).attr('x2',x(wLo)).attr('y1',cy-bh/4).attr('y2',cy+bh/4)
+      .attr('stroke',color).attr('stroke-width',1.5);
+    g.append('line').attr('x1',x(wHi)).attr('x2',x(wHi)).attr('y1',cy-bh/4).attr('y2',cy+bh/4)
+      .attr('stroke',color).attr('stroke-width',1.5);
+    // Box
+    g.append('rect').attr('x',x(q1)).attr('y',cy-bh/2).attr('width',x(q3)-x(q1)).attr('height',bh)
+      .attr('fill',color).attr('opacity',0.25).attr('stroke',color).attr('stroke-width',1.5).attr('rx',3);
+    // Median line
+    g.append('line').attr('x1',x(med)).attr('x2',x(med)).attr('y1',cy-bh/2).attr('y2',cy+bh/2)
+      .attr('stroke',color).attr('stroke-width',2.5);
+    // Outliers
+    sorted.filter(v=>v<wLo||v>wHi).forEach(v => {
+      g.append('circle').attr('cx',x(v)).attr('cy',cy).attr('r',2)
+        .attr('fill',color).attr('opacity',0.4);
+    });
+  });
+}
+
+function drawHistogram(containerId, data, contVar, groupVar, groups) {
+  clearChart(containerId);
+  const width = getContainerWidth(containerId);
+  if (width < 50) return;
+  const height = Math.min(360, Math.max(240, width*0.5));
+  const m = {top:20, right:20, bottom:45, left:55};
+  const w = width - m.left - m.right;
+  const h = height - m.top - m.bottom;
+
+  const allVals = data.map(d => d[contVar]).filter(v => v != null);
+  const filtered = filterPercentile(allVals);
+  if (filtered.length === 0) return;
+
+  const svg = d3.select('#'+containerId).append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet');
+  const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+
+  const xDomain = d3.extent(filtered);
+  const x = d3.scaleLinear().domain(xDomain).nice().range([0, w]);
+  const nBins = Math.min(30, Math.max(15, Math.ceil(Math.sqrt(filtered.length))));
+  const thresholds = x.ticks(nBins);
+
+  let maxCount = 0;
+  const groupBins = {};
+  groups.forEach(grp => {
+    const vals = data.filter(d => d[groupVar]===grp).map(d=>d[contVar]).filter(v=>v!=null);
+    const fv = filterPercentile(vals);
+    const bins = d3.bin().domain(x.domain()).thresholds(thresholds)(fv);
+    groupBins[grp] = bins;
+    bins.forEach(b => { if(b.length > maxCount) maxCount = b.length; });
+  });
+
+  const y = d3.scaleLinear().domain([0, maxCount*1.1||1]).range([h, 0]);
+  g.append('g').attr('class','grid').call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(''));
+
+  groups.forEach(grp => {
+    const bins = groupBins[grp];
+    const color = DISPO_COLORS[grp] || '#666';
+    bins.forEach(b => {
+      if (b.length > 0) {
+        g.append('rect')
+          .attr('x', x(b.x0)+1).attr('y', y(b.length))
+          .attr('width', Math.max(0, x(b.x1)-x(b.x0)-2))
+          .attr('height', h-y(b.length))
+          .attr('fill', color).attr('opacity', 0.5).attr('rx',1);
+      }
+    });
+  });
+
+  g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).ticks(8));
+  g.append('g').call(d3.axisLeft(y).ticks(5));
+
+  // Legend
+  const legend = svg.append('g').attr('transform',`translate(${m.left+10},${m.top+5})`);
+  groups.forEach((grp,i) => {
+    const lg = legend.append('g').attr('transform',`translate(0,${i*18})`);
+    lg.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',DISPO_COLORS[grp]||'#666').attr('opacity',0.6);
+    lg.append('text').attr('x',16).attr('y',10).attr('font-size','11px').attr('fill','var(--text-muted)')
+      .attr('font-family','var(--font-body)').text(grp);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// CROSS-TAB TABLE BUILDER
+// ═══════════════════════════════════════════════════════
+function buildCrossTab(data, catVar, levels) {
+  const dispoLevels = ['Kotiutunut','Osastolle'];
+  let html = '<table class="ctable"><thead><tr><th rowspan="2">' + (VARS[catVar]?.label || catVar) + '</th>';
+  html += '<th colspan="3">Hoidon lopputulos</th></tr><tr>';
+  dispoLevels.forEach(d => html += '<th>'+d+'</th>');
+  html += '<th class="total">Yhteensä</th></tr></thead><tbody>';
+
+  let grandTotal = 0;
+  const grandDispo = {};
+  dispoLevels.forEach(d => grandDispo[d] = 0);
+
+  levels.forEach(lev => {
+    const sub = data.filter(d => String(d[catVar]) === String(lev));
+    const total = sub.length;
+    grandTotal += total;
+    html += '<tr><th>' + lev + '</th>';
+    dispoLevels.forEach(d => {
+      const count = sub.filter(r => r.dispo === d).length;
+      grandDispo[d] += count;
+      const pct = total > 0 ? fmtNum(100*count/total,1) : '0,0';
+      html += `<td>${count}<span class="pct">${pct} %</span></td>`;
+    });
+    html += `<td class="total">${total}</td></tr>`;
+  });
+
+  html += '<tr class="total-row"><th>Yhteensä</th>';
+  dispoLevels.forEach(d => {
+    const pct = grandTotal > 0 ? fmtNum(100*grandDispo[d]/grandTotal,1) : '0,0';
+    html += `<td>${grandDispo[d]}<span class="pct">${pct} %</span></td>`;
+  });
+  html += `<td>${grandTotal}</td></tr></tbody></table>`;
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════
+// CONTINUOUS STATS TABLE
+// ═══════════════════════════════════════════════════════
+function buildContStatsTable(data, varKeys) {
+  const groups = ['Kotiutunut','Osastolle'];
+  let html = '<table class="ctable"><thead><tr><th>Muuttuja</th>';
+  groups.forEach(g => html += '<th>'+g+'</th>');
+  html += '</tr></thead><tbody>';
+  varKeys.forEach(vk => {
+    const info = VARS[vk];
+    if (!info) return;
+    html += '<tr><th>' + info.label + '</th>';
+    groups.forEach(grp => {
+      const vals = data.filter(d => d.dispo===grp).map(d=>d[vk]).filter(v=>v!=null);
+      if (vals.length < 2) { html += '<td>-</td>'; return; }
+      const med = quantile(vals, 0.5);
+      const q1 = quantile(vals, 0.25);
+      const q3 = quantile(vals, 0.75);
+      html += `<td>${fmtNum(med,1)} (${fmtNum(q1,1)}–${fmtNum(q3,1)})</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+// ═══════════════════════════════════════════════════════
+// PANEL BUILDERS
+// ═══════════════════════════════════════════════════════
+
+// ─── SUMMARY ───
+function buildSummary() {
+  const panel = document.getElementById('panel-summary');
+  const n = FILTERED.length;
+  const nOsasto = FILTERED.filter(d=>d.dispo==='Osastolle').length;
+  const osastoPct = n > 0 ? fmtNum(100*nOsasto/n, 1) : '0';
+  const avgAge = n > 0 ? fmtNum(mean(FILTERED.map(d=>d.ika)), 1) : '-';
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Yleiskatsaus</div>
+      <div class="panel-title">Yhteenveto</div>
+      <div class="panel-desc">Suodatetun aineiston yleiskatsaus</div>
+    </div>
+    <div class="stat-row" style="margin-bottom:14px">
+      <div class="stat-box"><div class="stat-lbl">Potilaita yhteensä</div><div class="stat-val">${fmtInt(n)}</div></div>
+      <div class="stat-box stat-teal"><div class="stat-lbl">Osastohoitoon (%)</div><div class="stat-val">${osastoPct} %</div><div class="stat-sub">${nOsasto} potilasta</div></div>
+      <div class="stat-box stat-orange"><div class="stat-lbl">Keski-ikä (v)</div><div class="stat-val">${avgAge}</div></div>
+    </div>
+    <div class="grid-2x2">
+      <div class="chart-card"><div class="cc-header"><div class="cc-header-text"><div class="cc-title">Hoidon lopputulos</div></div></div><div class="cc-body"><div class="cc-chart" id="chart-summary-dispo"></div></div></div>
+      <div class="chart-card"><div class="cc-header"><div class="cc-header-text"><div class="cc-title">ESI-luokka jakauma</div></div></div><div class="cc-body"><div class="cc-chart" id="chart-summary-esi"></div></div></div>
+      <div class="chart-card"><div class="cc-header"><div class="cc-header-text"><div class="cc-title">Hoidon lopputulos ikäryhmittäin</div></div></div><div class="cc-body"><div class="cc-chart" id="chart-summary-age"></div></div></div>
+      <div class="chart-card"><div class="cc-header"><div class="cc-header-text"><div class="cc-title">Hoidon lopputulos sukupuolittain</div></div></div><div class="cc-body"><div class="cc-chart" id="chart-summary-gender"></div></div></div>
+    </div>
+  `;
+
+  // Chart 1: Dispo bar
+  drawSimpleBar('chart-summary-dispo', FILTERED, 'dispo', ['Kotiutunut','Osastolle']);
+  // Chart 2: ESI distribution
+  const esiLevels = ['1','2','3','4','5'];
+  drawStackedBar('chart-summary-esi', FILTERED.filter(d=>d.esi!=null), 'esi', 'dispo', 'count', esiLevels, ['Kotiutunut','Osastolle']);
+  // Chart 3: Age groups
+  const ageGrouped = FILTERED.map(d => ({...d, ageGroup: d.ika<=20?'18-20':d.ika<=40?'21-40':d.ika<=60?'41-60':d.ika<=80?'61-80':'81+'}));
+  drawStackedBar('chart-summary-age', ageGrouped, 'ageGroup', 'dispo', 'pct', ['18-20','21-40','41-60','61-80','81+'], ['Kotiutunut','Osastolle']);
+  // Chart 4: Gender
+  drawStackedBar('chart-summary-gender', FILTERED, 'sukupuoli', 'dispo', 'pct', ['Nainen','Mies'], ['Kotiutunut','Osastolle']);
+}
+
+function drawSimpleBar(containerId, data, varName, levels) {
+  clearChart(containerId);
+  const width = getContainerWidth(containerId);
+  if (width < 50) return;
+  const height = Math.min(300, Math.max(200, width*0.5));
+  const m = {top:20, right:20, bottom:40, left:55};
+  const w = width - m.left - m.right;
+  const h = height - m.top - m.bottom;
+
+  const counts = {};
+  levels.forEach(l => counts[l] = 0);
+  data.forEach(d => { if(counts[d[varName]]!==undefined) counts[d[varName]]++; });
+
+  const svg = d3.select('#'+containerId).append('svg')
+    .attr('viewBox',`0 0 ${width} ${height}`)
+    .attr('preserveAspectRatio','xMidYMid meet');
+  const g = svg.append('g').attr('transform',`translate(${m.left},${m.top})`);
+
+  const x = d3.scaleBand().domain(levels).range([0,w]).padding(0.3);
+  const y = d3.scaleLinear().domain([0, d3.max(levels,l=>counts[l])*1.15||1]).range([h,0]);
+
+  g.append('g').attr('class','grid').call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(''));
+
+  levels.forEach(l => {
+    const color = DISPO_COLORS[l] || '#1B4F8A';
+    g.append('rect').attr('x',x(l)).attr('y',y(counts[l])).attr('width',x.bandwidth())
+      .attr('height',h-y(counts[l])).attr('fill',color).attr('rx',3);
+    g.append('text').attr('x',x(l)+x.bandwidth()/2).attr('y',y(counts[l])-6)
+      .attr('text-anchor','middle').attr('font-size','12px').attr('font-weight','600')
+      .attr('font-family','var(--font-mono)').attr('fill','var(--text)').text(counts[l]);
+  });
+
+  g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x));
+  g.append('g').call(d3.axisLeft(y).ticks(5));
+}
+
+// ─── CATEGORICAL VARIABLE TAB ───
+function buildCategorical(tabId, varKey) {
+  const panel = document.getElementById('panel-' + tabId);
+  const info = VARS[varKey];
+  const levels = info.levels || [...new Set(FILTERED.map(d => d[varKey]).filter(v => v != null))];
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">${GROUP_LABELS[info.group] || ''}</div>
+      <div class="panel-title">${info.label}</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-controls">
+        <div class="toggle-group" id="toggle-${tabId}">
+          <button class="tog-btn active" data-mode="count" onclick="toggleCat('${tabId}','${varKey}','count')">Lukumäärä</button>
+          <button class="tog-btn" data-mode="pct" onclick="toggleCat('${tabId}','${varKey}','pct')">Suhteellinen osuus</button>
+        </div>
+      </div>
+      <div class="cc-body"><div class="cc-chart" id="chart-${tabId}"></div></div>
+      <div class="cc-footer" id="table-${tabId}"></div>
+    </div>
+  `;
+
+  drawStackedBar('chart-' + tabId, FILTERED, varKey, 'dispo', 'count', levels.map(String), ['Kotiutunut','Osastolle']);
+  document.getElementById('table-' + tabId).innerHTML = buildCrossTab(FILTERED, varKey, levels.map(String));
+}
+
+function toggleCat(tabId, varKey, mode) {
+  const tg = document.getElementById('toggle-'+tabId);
+  tg.querySelectorAll('.tog-btn').forEach(b => b.classList.toggle('active', b.dataset.mode===mode));
+  const info = VARS[varKey];
+  const levels = (info.levels || [...new Set(FILTERED.map(d=>d[varKey]).filter(v=>v!=null))]).map(String);
+  drawStackedBar('chart-'+tabId, FILTERED, varKey, 'dispo', mode, levels, ['Kotiutunut','Osastolle']);
+}
+
+// ─── AGE TAB ───
+function buildAge() {
+  const panel = document.getElementById('panel-age');
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Taustatiedot</div>
+      <div class="panel-title">Ikä</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-controls">
+        <div class="toggle-group" id="toggle-age">
+          <button class="tog-btn active" data-mode="hist" onclick="toggleAge('hist')">Histogrammi</button>
+          <button class="tog-btn" data-mode="box" onclick="toggleAge('box')">Laatikkokaavio</button>
+        </div>
+      </div>
+      <div class="cc-body"><div class="cc-chart" id="chart-age"></div></div>
+      <div class="cc-footer" id="table-age"></div>
+    </div>
+  `;
+  drawHistogram('chart-age', FILTERED, 'ika', 'dispo', ['Kotiutunut','Osastolle']);
+  document.getElementById('table-age').innerHTML = buildAgeStatsTable();
+}
+
+function toggleAge(mode) {
+  const tg = document.getElementById('toggle-age');
+  tg.querySelectorAll('.tog-btn').forEach(b => b.classList.toggle('active', b.dataset.mode===mode));
+  if (mode==='hist') drawHistogram('chart-age', FILTERED, 'ika', 'dispo', ['Kotiutunut','Osastolle']);
+  else drawBoxplot('chart-age', FILTERED, 'ika', 'dispo', ['Kotiutunut','Osastolle']);
+}
+
+function buildAgeStatsTable() {
+  const groups = ['Kotiutunut','Osastolle'];
+  let html = '<table class="ctable"><thead><tr><th></th>';
+  groups.forEach(g => html += '<th>'+g+'</th>');
+  html += '</tr></thead><tbody>';
+  html += '<tr><th>n</th>';
+  groups.forEach(g => {
+    html += '<td>'+FILTERED.filter(d=>d.dispo===g).length+'</td>';
+  });
+  html += '</tr><tr><th>Mediaani (Q25–Q75)</th>';
+  groups.forEach(g => {
+    const vals = FILTERED.filter(d=>d.dispo===g).map(d=>d.ika);
+    if(vals.length<2) { html+='<td>-</td>'; return; }
+    html += `<td>${fmtNum(quantile(vals,0.5),0)} (${fmtNum(quantile(vals,0.25),0)}–${fmtNum(quantile(vals,0.75),0)})</td>`;
+  });
+  html += '</tr><tr><th>Min–Max</th>';
+  groups.forEach(g => {
+    const vals = FILTERED.filter(d=>d.dispo===g).map(d=>d.ika);
+    if(vals.length===0) { html+='<td>-</td>'; return; }
+    html += `<td>${d3.min(vals)}–${d3.max(vals)}</td>`;
+  });
+  html += '</tr></tbody></table>';
+  return html;
+}
+
+// ─── ARRIVAL TIME TAB ───
+function buildArrivalTime() {
+  const panel = document.getElementById('panel-arrival-time');
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Käynnin tiedot</div>
+      <div class="panel-title">Saapumisaika</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-controls" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="toggle-group" id="toggle-arrtime-mode">
+          <button class="tog-btn active" data-mode="count" onclick="setToggle(this);renderArrivalTime()">Lukumäärä</button>
+          <button class="tog-btn" data-mode="pct" onclick="setToggle(this);renderArrivalTime()">Prosentti</button>
+        </div>
+        <div class="toggle-group" id="toggle-arrtime-sub">
+          <button class="tog-btn active" data-sub="kuukausi" onclick="toggleArrTimeSub('kuukausi')">Kuukausi</button>
+          <button class="tog-btn" data-sub="viikonpaiva" onclick="toggleArrTimeSub('viikonpaiva')">Viikonpäivä</button>
+          <button class="tog-btn" data-sub="kellonaika" onclick="toggleArrTimeSub('kellonaika')">Kellonaika</button>
+        </div>
+      </div>
+      <div class="cc-body"><div class="cc-chart" id="chart-arrtime"></div></div>
+      <div class="cc-footer" id="table-arrtime"></div>
+    </div>
+  `;
+  renderArrivalTime();
+}
+
+function getArrTimeState() {
+  const modeBtn = document.querySelector('#toggle-arrtime-mode .tog-btn.active');
+  const subBtn = document.querySelector('#toggle-arrtime-sub .tog-btn.active');
+  return {
+    mode: modeBtn ? modeBtn.dataset.mode : 'count',
+    sub: subBtn ? subBtn.dataset.sub : 'kuukausi'
+  };
+}
+
+function toggleArrTimeSub(sub) {
+  document.querySelectorAll('#toggle-arrtime-sub .tog-btn').forEach(b => b.classList.toggle('active', b.dataset.sub===sub));
+  renderArrivalTime();
+}
+
+function renderArrivalTime() {
+  const {mode, sub} = getArrTimeState();
+  const varKey = sub;
+  const levels = VARS[varKey].levels;
+  drawStackedBar('chart-arrtime', FILTERED, varKey, 'dispo', mode, levels, ['Kotiutunut','Osastolle']);
+  document.getElementById('table-arrtime').innerHTML = buildCrossTab(FILTERED, varKey, levels);
+}
+
+// ─── COMPLAINTS TAB ───
+function buildComplaints() {
+  const panel = document.getElementById('panel-complaints');
+  const tsKeys = Object.keys(VARS).filter(k => VARS[k].group === 'tulosyyt');
+  // Sort by frequency
+  const freqs = tsKeys.map(k => ({key:k, count:FILTERED.filter(d=>d[k]===1).length}));
+  freqs.sort((a,b) => b.count - a.count);
+  const top30 = freqs.slice(0,30);
+  const defaultSelected = top30.slice(0,5).map(f=>f.key);
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Käynnin tiedot</div>
+      <div class="panel-title">Tulosyyt</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-controls" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="multi-select-wrap" id="complaints-select-wrap">
+          <div class="multi-select-btn" onclick="toggleMultiDrop('complaints-dropdown')">
+            <span>Valitse tulosyyt</span> <span class="multi-select-count" id="complaints-count">${defaultSelected.length}</span>
+          </div>
+          <div class="multi-select-dropdown" id="complaints-dropdown">
+            ${top30.map(f => `<label><input type="checkbox" value="${f.key}" ${defaultSelected.includes(f.key)?'checked':''} onchange="renderComplaints()"> ${VARS[f.key].label} (${f.count})</label>`).join('')}
+          </div>
+        </div>
+        <div class="toggle-group" id="toggle-complaints">
+          <button class="tog-btn active" data-mode="count" onclick="setToggle(this);renderComplaints()">Lukumäärä</button>
+          <button class="tog-btn" data-mode="pct" onclick="setToggle(this);renderComplaints()">Suhteellinen osuus</button>
+        </div>
+      </div>
+      <div class="cc-body"><div class="cc-chart" id="chart-complaints"></div></div>
+      <div class="cc-footer" id="table-complaints"></div>
+    </div>
+  `;
+  renderComplaints();
+}
+
+function renderComplaints() {
+  const selected = [...document.querySelectorAll('#complaints-dropdown input:checked')].map(c=>c.value);
+  document.getElementById('complaints-count').textContent = selected.length;
+  const mode = document.querySelector('#toggle-complaints .tog-btn.active')?.dataset.mode || 'count';
+  if (selected.length === 0) {
+    clearChart('chart-complaints');
+    document.getElementById('table-complaints').innerHTML = '<div class="alert alert-info">Valitse vähintään yksi tulosyy.</div>';
+    return;
+  }
+
+  // Build data for stacked bar: x = complaint label, fill = dispo
+  const labels = selected.map(k => VARS[k].label);
+  const chartData = [];
+  selected.forEach(k => {
+    FILTERED.filter(d => d[k] === 1).forEach(d => {
+      chartData.push({_complaint: VARS[k].label, dispo: d.dispo});
+    });
+  });
+  drawStackedBar('chart-complaints', chartData, '_complaint', 'dispo', mode, labels, ['Kotiutunut','Osastolle']);
+
+  // Cross-tab
+  let html = '<table class="ctable"><thead><tr><th>Tulosyy</th><th>Kotiutunut</th><th>Osastolle</th><th class="total">Yhteensä</th></tr></thead><tbody>';
+  selected.forEach(k => {
+    const sub = FILTERED.filter(d => d[k]===1);
+    const koti = sub.filter(d=>d.dispo==='Kotiutunut').length;
+    const osas = sub.filter(d=>d.dispo==='Osastolle').length;
+    const tot = sub.length;
+    html += `<tr><th>${VARS[k].label}</th>
+      <td>${koti}<span class="pct">${pctStr(koti,tot)} %</span></td>
+      <td>${osas}<span class="pct">${pctStr(osas,tot)} %</span></td>
+      <td class="total">${tot}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('table-complaints').innerHTML = html;
+}
+
+// ─── PREVIOUS VISITS TAB ───
+function buildPrevVisits() {
+  const panel = document.getElementById('panel-prev-visits');
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Historia</div>
+      <div class="panel-title">Aiemmat käynnit</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-controls" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="toggle-group" id="toggle-prev-mode">
+          <button class="tog-btn active" data-mode="count" onclick="setToggle(this);renderPrevVisits()">Lukumäärä</button>
+          <button class="tog-btn" data-mode="pct" onclick="setToggle(this);renderPrevVisits()">Prosentti</button>
+        </div>
+        <div class="toggle-group" id="toggle-prev-sub">
+          <button class="tog-btn active" data-sub="kaynti" onclick="setToggleSub(this,'toggle-prev-sub');renderPrevVisits()">Päivystyskäynnit</button>
+          <button class="tog-btn" data-sub="osasto" onclick="setToggleSub(this,'toggle-prev-sub');renderPrevVisits()">Osastojaksot</button>
+          <button class="tog-btn" data-sub="edellinen" onclick="setToggleSub(this,'toggle-prev-sub');renderPrevVisits()">Edellinen lopputulos</button>
+        </div>
+      </div>
+      <div class="cc-body"><div class="cc-chart" id="chart-prev"></div></div>
+      <div class="cc-footer" id="table-prev"></div>
+    </div>
+  `;
+  renderPrevVisits();
+}
+
+function renderPrevVisits() {
+  const mode = document.querySelector('#toggle-prev-mode .tog-btn.active')?.dataset.mode || 'count';
+  const sub = document.querySelector('#toggle-prev-sub .tog-btn.active')?.dataset.sub || 'kaynti';
+
+  if (sub === 'edellinen') {
+    const levels = VARS.edellinen_lopputulos.levels;
+    drawStackedBar('chart-prev', FILTERED, 'edellinen_lopputulos', 'dispo', mode, levels, ['Kotiutunut','Osastolle']);
+    document.getElementById('table-prev').innerHTML = buildCrossTab(FILTERED, 'edellinen_lopputulos', levels);
+  } else {
+    const varKey = sub === 'kaynti' ? 'aiemmat_kaynti' : 'aiemmat_osasto';
+    // Bin into groups
+    const binned = FILTERED.map(d => {
+      const v = d[varKey];
+      let grp;
+      if (v === 0) grp = '0';
+      else if (v <= 2) grp = '1-2';
+      else if (v <= 5) grp = '3-5';
+      else if (v <= 10) grp = '6-10';
+      else grp = '>10';
+      return {...d, _prevBin: grp};
+    });
+    const levels = ['0','1-2','3-5','6-10','>10'];
+    drawStackedBar('chart-prev', binned, '_prevBin', 'dispo', mode, levels, ['Kotiutunut','Osastolle']);
+    document.getElementById('table-prev').innerHTML = buildCrossTab(binned, '_prevBin', levels);
+  }
+}
+
+// ─── VITALS TAB ───
+function buildVitals() {
+  const panel = document.getElementById('panel-vitals');
+  const vitalKeys = Object.keys(VARS).filter(k => VARS[k].group==='vitaalit_triage' || VARS[k].group==='vitaalit_viim');
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Kliiniset tiedot</div>
+      <div class="panel-title">Vitaalielintoiminnot</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-controls" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="custom-select">
+          <select id="vitals-select" onchange="renderVitals()">
+            ${vitalKeys.map(k => `<option value="${k}">${VARS[k].label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="toggle-group" id="toggle-vitals">
+          <button class="tog-btn active" data-mode="box" onclick="setToggle(this);renderVitals()">Laatikkokaavio</button>
+          <button class="tog-btn" data-mode="hist" onclick="setToggle(this);renderVitals()">Histogrammi</button>
+        </div>
+      </div>
+      <div class="cc-body"><div class="cc-chart" id="chart-vitals"></div></div>
+      <div class="cc-footer" id="table-vitals"></div>
+    </div>
+  `;
+  renderVitals();
+}
+
+function renderVitals() {
+  const varKey = document.getElementById('vitals-select').value;
+  const mode = document.querySelector('#toggle-vitals .tog-btn.active')?.dataset.mode || 'box';
+  const groups = ['Kotiutunut','Osastolle'];
+
+  if (mode === 'box') drawBoxplot('chart-vitals', FILTERED, varKey, 'dispo', groups);
+  else drawHistogram('chart-vitals', FILTERED, varKey, 'dispo', groups);
+
+  // Stats table for ALL vitals
+  const allVitalKeys = Object.keys(VARS).filter(k => VARS[k].group==='vitaalit_triage' || VARS[k].group==='vitaalit_viim');
+  document.getElementById('table-vitals').innerHTML = buildContStatsTable(FILTERED, allVitalKeys);
+}
+
+// ─── LABS TAB ───
+function buildLabs() {
+  const panel = document.getElementById('panel-labs');
+  const labKeys = Object.keys(VARS).filter(k => VARS[k].group==='laboratorio');
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Kliiniset tiedot</div>
+      <div class="panel-title">Laboratoriotestit</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-controls" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="custom-select">
+          <select id="labs-select" onchange="renderLabs()">
+            ${labKeys.map(k => `<option value="${k}">${VARS[k].label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="toggle-group" id="toggle-labs">
+          <button class="tog-btn active" data-mode="box" onclick="setToggle(this);renderLabs()">Laatikkokaavio</button>
+          <button class="tog-btn" data-mode="hist" onclick="setToggle(this);renderLabs()">Histogrammi</button>
+        </div>
+      </div>
+      <div class="cc-body"><div class="cc-chart" id="chart-labs"></div></div>
+      <div class="cc-footer" id="table-labs"></div>
+    </div>
+  `;
+  renderLabs();
+}
+
+function renderLabs() {
+  const varKey = document.getElementById('labs-select').value;
+  const mode = document.querySelector('#toggle-labs .tog-btn.active')?.dataset.mode || 'box';
+  const groups = ['Kotiutunut','Osastolle'];
+
+  // Only use data where the lab value is not null
+  const labData = FILTERED.filter(d => d[varKey] != null);
+  if (labData.length < 5) {
+    clearChart('chart-labs');
+    document.getElementById('chart-labs').innerHTML = '<div class="alert alert-info">Liian vähän dataa tälle laboratorioarvolle.</div>';
+    document.getElementById('table-labs').innerHTML = '';
+    return;
+  }
+  if (mode === 'box') drawBoxplot('chart-labs', labData, varKey, 'dispo', groups);
+  else drawHistogram('chart-labs', labData, varKey, 'dispo', groups);
+
+  const allLabKeys = Object.keys(VARS).filter(k => VARS[k].group==='laboratorio');
+  document.getElementById('table-labs').innerHTML = buildContStatsTable(FILTERED, allLabKeys);
+}
+
+// ─── IMAGING TAB ───
+function buildImaging() {
+  const panel = document.getElementById('panel-imaging');
+  const imgKeys = Object.keys(VARS).filter(k => VARS[k].group==='kuvantaminen');
+  const freqs = imgKeys.map(k => ({key:k, count:FILTERED.filter(d=>d[k]===1).length}));
+  freqs.sort((a,b)=>b.count-a.count);
+  const defaultSelected = freqs.slice(0,5).map(f=>f.key);
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Kliiniset tiedot</div>
+      <div class="panel-title">Kuvantaminen</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-controls" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="multi-select-wrap" id="imaging-select-wrap">
+          <div class="multi-select-btn" onclick="toggleMultiDrop('imaging-dropdown')">
+            <span>Valitse kuvantaminen</span> <span class="multi-select-count" id="imaging-count">${defaultSelected.length}</span>
+          </div>
+          <div class="multi-select-dropdown" id="imaging-dropdown">
+            ${freqs.map(f => `<label><input type="checkbox" value="${f.key}" ${defaultSelected.includes(f.key)?'checked':''} onchange="renderImaging()"> ${VARS[f.key].label} (${f.count})</label>`).join('')}
+          </div>
+        </div>
+        <div class="toggle-group" id="toggle-imaging">
+          <button class="tog-btn active" data-mode="count" onclick="setToggle(this);renderImaging()">Lukumäärä</button>
+          <button class="tog-btn" data-mode="pct" onclick="setToggle(this);renderImaging()">Suhteellinen osuus</button>
+        </div>
+      </div>
+      <div class="cc-body"><div class="cc-chart" id="chart-imaging"></div></div>
+      <div class="cc-footer" id="table-imaging"></div>
+    </div>
+  `;
+  renderImaging();
+}
+
+function renderImaging() {
+  const selected = [...document.querySelectorAll('#imaging-dropdown input:checked')].map(c=>c.value);
+  document.getElementById('imaging-count').textContent = selected.length;
+  const mode = document.querySelector('#toggle-imaging .tog-btn.active')?.dataset.mode || 'count';
+  if (selected.length === 0) {
+    clearChart('chart-imaging');
+    document.getElementById('table-imaging').innerHTML = '<div class="alert alert-info">Valitse vähintään yksi kuvantamismuoto.</div>';
+    return;
+  }
+
+  const labels = selected.map(k => VARS[k].label);
+  const chartData = [];
+  selected.forEach(k => {
+    FILTERED.filter(d => d[k] === 1).forEach(d => {
+      chartData.push({_img: VARS[k].label, dispo: d.dispo});
+    });
+  });
+  drawStackedBar('chart-imaging', chartData, '_img', 'dispo', mode, labels, ['Kotiutunut','Osastolle']);
+
+  let html = '<div class="alert alert-info" style="margin-bottom:8px"><strong>Huom:</strong> Nimittäjänä ovat potilaat, joille kyseinen tutkimus on tehty.</div>';
+  html += '<table class="ctable"><thead><tr><th>Kuvantaminen</th><th>Kotiutunut</th><th>Osastolle</th><th class="total">Yhteensä</th></tr></thead><tbody>';
+  selected.forEach(k => {
+    const sub = FILTERED.filter(d => d[k]===1);
+    const koti = sub.filter(d=>d.dispo==='Kotiutunut').length;
+    const osas = sub.filter(d=>d.dispo==='Osastolle').length;
+    const tot = sub.length;
+    html += `<tr><th>${VARS[k].label}</th>
+      <td>${koti}<span class="pct">${pctStr(koti,tot)} %</span></td>
+      <td>${osas}<span class="pct">${pctStr(osas,tot)} %</span></td>
+      <td class="total">${tot}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('table-imaging').innerHTML = html;
+}
+
+// ─── MEDICATIONS TAB ───
+function buildMeds() {
+  const panel = document.getElementById('panel-meds');
+  const medKeys = Object.keys(VARS).filter(k => VARS[k].group==='laakitys');
+  const freqs = medKeys.map(k => ({key:k, count:FILTERED.filter(d=>d[k]===1).length}));
+  freqs.sort((a,b)=>b.count-a.count);
+  const top20 = freqs.slice(0,20);
+  const defaultSelected = top20.slice(0,5).map(f=>f.key);
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Kliiniset tiedot</div>
+      <div class="panel-title">Lääkitys</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-controls" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="multi-select-wrap" id="meds-select-wrap">
+          <div class="multi-select-btn" onclick="toggleMultiDrop('meds-dropdown')">
+            <span>Valitse lääkitys</span> <span class="multi-select-count" id="meds-count">${defaultSelected.length}</span>
+          </div>
+          <div class="multi-select-dropdown" id="meds-dropdown">
+            ${top20.map(f => `<label><input type="checkbox" value="${f.key}" ${defaultSelected.includes(f.key)?'checked':''} onchange="renderMeds()"> ${VARS[f.key].label} (${f.count})</label>`).join('')}
+          </div>
+        </div>
+        <div class="toggle-group" id="toggle-meds">
+          <button class="tog-btn active" data-mode="count" onclick="setToggle(this);renderMeds()">Lukumäärä</button>
+          <button class="tog-btn" data-mode="pct" onclick="setToggle(this);renderMeds()">Suhteellinen osuus</button>
+        </div>
+      </div>
+      <div class="cc-body"><div class="cc-chart" id="chart-meds"></div></div>
+      <div class="cc-footer" id="table-meds"></div>
+    </div>
+  `;
+  renderMeds();
+}
+
+function renderMeds() {
+  const selected = [...document.querySelectorAll('#meds-dropdown input:checked')].map(c=>c.value);
+  document.getElementById('meds-count').textContent = selected.length;
+  const mode = document.querySelector('#toggle-meds .tog-btn.active')?.dataset.mode || 'count';
+  if (selected.length === 0) {
+    clearChart('chart-meds');
+    document.getElementById('table-meds').innerHTML = '<div class="alert alert-info">Valitse vähintään yksi lääkeryhmä.</div>';
+    return;
+  }
+
+  const labels = selected.map(k => VARS[k].label);
+  const chartData = [];
+  selected.forEach(k => {
+    FILTERED.filter(d => d[k] === 1).forEach(d => {
+      chartData.push({_med: VARS[k].label, dispo: d.dispo});
+    });
+  });
+  drawStackedBar('chart-meds', chartData, '_med', 'dispo', mode, labels, ['Kotiutunut','Osastolle']);
+
+  let html = '<table class="ctable"><thead><tr><th>Lääkitys</th><th>Kotiutunut</th><th>Osastolle</th><th class="total">Yhteensä</th></tr></thead><tbody>';
+  selected.forEach(k => {
+    const sub = FILTERED.filter(d => d[k]===1);
+    const koti = sub.filter(d=>d.dispo==='Kotiutunut').length;
+    const osas = sub.filter(d=>d.dispo==='Osastolle').length;
+    const tot = sub.length;
+    html += `<tr><th>${VARS[k].label}</th>
+      <td>${koti}<span class="pct">${pctStr(koti,tot)} %</span></td>
+      <td>${osas}<span class="pct">${pctStr(osas,tot)} %</span></td>
+      <td class="total">${tot}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('table-meds').innerHTML = html;
+}
+
+// ─── SUMMARY TABLE (Analyysit) ───
+function buildSummaryTable() {
+  const panel = document.getElementById('panel-summary-table');
+  // Group variables for selection
+  const varGroups = {};
+  Object.keys(VARS).forEach(k => {
+    if (k === 'dispo') return;
+    const grp = VARS[k].group;
+    if (!varGroups[grp]) varGroups[grp] = [];
+    varGroups[grp].push(k);
+  });
+
+  let checkboxesHtml = '';
+  Object.keys(varGroups).forEach(grp => {
+    checkboxesHtml += `<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">${GROUP_LABELS[grp] || grp}</div>`;
+    varGroups[grp].forEach(k => {
+      checkboxesHtml += `<label style="display:flex;align-items:center;gap:5px;padding:2px 0;font-size:11.5px;cursor:pointer">
+        <input type="checkbox" class="sumtable-var" value="${k}" onchange="renderSummaryTable()"> ${VARS[k].label}
+      </label>`;
+    });
+    checkboxesHtml += '</div>';
+  });
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Analyysit</div>
+      <div class="panel-title">Yhteenvetotaulukko</div>
+    </div>
+    <div class="split-panel">
+      <div class="split-left">
+        <div class="section-title">Valitse muuttujat</div>
+        ${checkboxesHtml}
+        <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:500">
+            <input type="checkbox" id="sumtable-split" checked onchange="renderSummaryTable()"> Jaa hoidon lopputuloksen mukaan
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:500;margin-top:4px">
+            <input type="checkbox" id="sumtable-pval" onchange="renderSummaryTable()"> Näytä p-arvot
+          </label>
+        </div>
+      </div>
+      <div class="split-right" id="sumtable-output">
+        <div class="alert alert-info">Valitse muuttujia vasemmalta.</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSummaryTable() {
+  const selected = [...document.querySelectorAll('.sumtable-var:checked')].map(c=>c.value);
+  const split = document.getElementById('sumtable-split').checked;
+  const showP = document.getElementById('sumtable-pval').checked;
+  const output = document.getElementById('sumtable-output');
+
+  if (selected.length === 0) {
+    output.innerHTML = '<div class="alert alert-info">Valitse muuttujia vasemmalta.</div>';
+    return;
+  }
+
+  let html = '<div class="chart-card"><div class="cc-body" style="overflow-x:auto"><table class="ctable"><thead><tr><th>Muuttuja</th>';
+  if (split) {
+    html += '<th>Kotiutunut<br><span style="font-weight:400;font-size:9px">n = '+FILTERED.filter(d=>d.dispo==='Kotiutunut').length+'</span></th>';
+    html += '<th>Osastolle<br><span style="font-weight:400;font-size:9px">n = '+FILTERED.filter(d=>d.dispo==='Osastolle').length+'</span></th>';
+    if (showP) html += '<th>p-arvo</th>';
+  } else {
+    html += '<th>Kaikki<br><span style="font-weight:400;font-size:9px">n = '+FILTERED.length+'</span></th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  selected.forEach(k => {
+    const info = VARS[k];
+    if (!info) return;
+
+    if (info.type === 'cont') {
+      html += '<tr><th>' + info.label + '</th>';
+      if (split) {
+        ['Kotiutunut','Osastolle'].forEach(grp => {
+          const vals = FILTERED.filter(d=>d.dispo===grp).map(d=>d[k]).filter(v=>v!=null);
+          if (vals.length < 2) { html += '<td>-</td>'; return; }
+          html += `<td>${fmtNum(quantile(vals,0.5),1)} (${fmtNum(quantile(vals,0.25),1)}–${fmtNum(quantile(vals,0.75),1)})</td>`;
+        });
+        if (showP) {
+          const result = autoTest(k, FILTERED);
+          const cls = result.p < 0.05 ? 'p-sig' : 'p-ns';
+          html += `<td class="p-col ${cls}">${fmtP(result.p)}</td>`;
+        }
+      } else {
+        const vals = FILTERED.map(d=>d[k]).filter(v=>v!=null);
+        if (vals.length < 2) html += '<td>-</td>';
+        else html += `<td>${fmtNum(quantile(vals,0.5),1)} (${fmtNum(quantile(vals,0.25),1)}–${fmtNum(quantile(vals,0.75),1)})</td>`;
+      }
+      html += '</tr>';
+    } else if (info.type === 'binary') {
+      html += '<tr><th>' + info.label + '</th>';
+      if (split) {
+        ['Kotiutunut','Osastolle'].forEach(grp => {
+          const sub = FILTERED.filter(d=>d.dispo===grp);
+          const count = sub.filter(d=>d[k]===1).length;
+          html += `<td>${count} (${pctStr(count,sub.length)} %)</td>`;
+        });
+        if (showP) {
+          const result = autoTest(k, FILTERED);
+          const cls = result.p < 0.05 ? 'p-sig' : 'p-ns';
+          html += `<td class="p-col ${cls}">${fmtP(result.p)}</td>`;
+        }
+      } else {
+        const count = FILTERED.filter(d=>d[k]===1).length;
+        html += `<td>${count} (${pctStr(count,FILTERED.length)} %)</td>`;
+      }
+      html += '</tr>';
+    } else {
+      // Categorical / ordinal
+      const levels = info.levels || [...new Set(FILTERED.map(d=>d[k]).filter(v=>v!=null))];
+      // Header row for the variable
+      const colSpan = split ? (showP ? 4 : 3) : 2;
+      html += `<tr><th colspan="${colSpan}" style="background:var(--primary-lighter);color:var(--primary);font-weight:600">${info.label}</th></tr>`;
+      levels.forEach(lev => {
+        html += '<tr><th style="padding-left:20px;font-weight:400">' + lev + '</th>';
+        if (split) {
+          ['Kotiutunut','Osastolle'].forEach(grp => {
+            const sub = FILTERED.filter(d=>d.dispo===grp);
+            const count = sub.filter(d=>String(d[k])===String(lev)).length;
+            html += `<td>${count} (${pctStr(count,sub.length)} %)</td>`;
+          });
+          if (showP && lev === levels[0]) {
+            const result = autoTest(k, FILTERED);
+            const cls = result.p < 0.05 ? 'p-sig' : 'p-ns';
+            html += `<td class="p-col ${cls}" rowspan="${levels.length}">${fmtP(result.p)}</td>`;
+          }
+        } else {
+          const count = FILTERED.filter(d=>String(d[k])===String(lev)).length;
+          html += `<td>${count} (${pctStr(count,FILTERED.length)} %)</td>`;
+        }
+        html += '</tr>';
+      });
+    }
+  });
+
+  html += '</tbody></table></div></div>';
+  output.innerHTML = html;
+}
+
+// ─── RULE-BASED MODEL ───
+function buildRuleModel() {
+  const panel = document.getElementById('panel-rule-model');
+
+  // Build variable options grouped
+  const numVars = Object.keys(VARS).filter(k => VARS[k].type==='cont');
+  const catVars = Object.keys(VARS).filter(k => ['cat','ordinal','binary'].includes(VARS[k].type) && k!=='dispo');
+
+  let varOptionsHtml = '<optgroup label="Numeeriset">';
+  numVars.forEach(k => varOptionsHtml += `<option value="${k}">${VARS[k].label}</option>`);
+  varOptionsHtml += '</optgroup><optgroup label="Kategoriset">';
+  catVars.forEach(k => varOptionsHtml += `<option value="${k}">${VARS[k].label}</option>`);
+  varOptionsHtml += '</optgroup>';
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Analyysit</div>
+      <div class="panel-title">Fast Track -ohjaussääntö</div>
+      <div class="panel-desc">Luo sääntö, jolla ennustetaan mitkä potilaat todennäköisesti otetaan osastohoitoon ja ohjataan siksi suoraan keskussairaalaan.</div>
+    </div>
+    <div class="split-panel">
+      <div class="split-left" id="rule-builder-panel">
+        <div class="section-title">Sääntöjen rakentaja</div>
+        <div class="rule-builder">
+          <div class="rule-row">
+            <div style="flex:1">
+              <label style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);font-weight:600;display:block;margin-bottom:3px">Muuttuja</label>
+              <select id="rule-var" style="width:100%" onchange="updateRuleInputs()">
+                ${varOptionsHtml}
+              </select>
+            </div>
+          </div>
+          <div class="rule-row" id="rule-numeric-inputs" style="display:none">
+            <div>
+              <label style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);font-weight:600;display:block;margin-bottom:3px">Operaattori</label>
+              <select id="rule-op">
+                <option value=">">&gt;</option>
+                <option value="<">&lt;</option>
+                <option value=">=">&ge;</option>
+                <option value="<=">&le;</option>
+                <option value="=">=</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);font-weight:600;display:block;margin-bottom:3px">Arvo</label>
+              <input type="number" id="rule-val" style="width:80px" value="0">
+            </div>
+          </div>
+          <div id="rule-cat-inputs" style="display:none;max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:#fff;margin-bottom:8px">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn btn-success" onclick="addRule()">Lisää sääntö</button>
+            <button class="btn btn-danger" onclick="clearRules()">Tyhjennä</button>
+          </div>
+        </div>
+        <div class="section-title" style="margin-top:12px">Aktiiviset säännöt</div>
+        <ul class="rule-list" id="rule-list">
+          <li style="color:var(--text-dim);font-style:italic;border:none;background:none;padding:4px 0">Ei sääntöjä</li>
+        </ul>
+      </div>
+      <div class="split-right" id="rule-results">
+        <div class="stat-row" id="rule-stats" style="margin-bottom:14px"></div>
+        <div class="chart-card"><div class="cc-header"><div class="cc-header-text"><div class="cc-title">Vertailu</div></div></div>
+          <div class="cc-body"><div class="cc-chart" id="chart-rule"></div></div>
+          <div class="cc-footer" id="table-rule"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  updateRuleInputs();
+  renderRuleResults();
+}
+
+let activeRules = [];
+
+function updateRuleInputs() {
+  const varKey = document.getElementById('rule-var').value;
+  const info = VARS[varKey];
+  const numInputs = document.getElementById('rule-numeric-inputs');
+  const catInputs = document.getElementById('rule-cat-inputs');
+
+  if (info.type === 'cont') {
+    numInputs.style.display = 'flex';
+    catInputs.style.display = 'none';
+  } else {
+    numInputs.style.display = 'none';
+    catInputs.style.display = 'block';
+    // Build checkboxes for categorical levels
+    let levels;
+    if (info.type === 'binary') {
+      levels = [{val:'1', lbl:'Kyllä'}, {val:'0', lbl:'Ei'}];
+    } else {
+      levels = (info.levels || []).map(l => ({val:l, lbl:l}));
+    }
+    catInputs.innerHTML = levels.map(l =>
+      `<label style="display:flex;align-items:center;gap:5px;padding:2px 0;font-size:11.5px;cursor:pointer">
+        <input type="checkbox" value="${l.val}" class="rule-cat-cb"> ${l.lbl}
+      </label>`
+    ).join('');
+  }
+}
+
+function addRule() {
+  const varKey = document.getElementById('rule-var').value;
+  const info = VARS[varKey];
+
+  if (info.type === 'cont') {
+    const op = document.getElementById('rule-op').value;
+    const val = parseFloat(document.getElementById('rule-val').value);
+    if (isNaN(val)) return;
+    activeRules.push({varKey, type:'numeric', op, val, text:`${info.label} ${op} ${val}`});
+  } else {
+    const checked = [...document.querySelectorAll('#rule-cat-inputs .rule-cat-cb:checked')].map(c=>c.value);
+    if (checked.length === 0) return;
+    const labels = checked.join(', ');
+    activeRules.push({varKey, type:'cat', values:checked, text:`${info.label} = ${labels}`});
+  }
+
+  renderRuleList();
+  renderRuleResults();
+}
+
+function clearRules() {
+  activeRules = [];
+  renderRuleList();
+  renderRuleResults();
+}
+
+function removeRule(idx) {
+  activeRules.splice(idx, 1);
+  renderRuleList();
+  renderRuleResults();
+}
+
+function renderRuleList() {
+  const list = document.getElementById('rule-list');
+  if (activeRules.length === 0) {
+    list.innerHTML = '<li style="color:var(--text-dim);font-style:italic;border:none;background:none;padding:4px 0">Ei sääntöjä</li>';
+    return;
+  }
+  list.innerHTML = activeRules.map((r, i) =>
+    `<li><span class="rule-num">${i+1}.</span><span class="rule-text">${r.text}</span><button class="rule-remove" onclick="removeRule(${i})" title="Poista">&times;</button></li>`
+  ).join('');
+}
+
+function applyRulesToData(data) {
+  return data.filter(d => {
+    return activeRules.every(rule => {
+      const val = d[rule.varKey];
+      if (rule.type === 'numeric') {
+        if (val == null) return false;
+        switch(rule.op) {
+          case '>': return val > rule.val;
+          case '<': return val < rule.val;
+          case '>=': return val >= rule.val;
+          case '<=': return val <= rule.val;
+          case '=': return val === rule.val;
+        }
+      } else {
+        return rule.values.includes(String(val));
+      }
+      return false;
+    });
+  });
+}
+
+function renderRuleResults() {
+  const matched = applyRulesToData(FILTERED);
+  const N = FILTERED.length;
+  const n = matched.length;
+  const baseOsasto = N > 0 ? 100*FILTERED.filter(d=>d.dispo==='Osastolle').length/N : 0;
+  const matchedOsasto = n > 0 ? 100*matched.filter(d=>d.dispo==='Osastolle').length/n : 0;
+  const improvement = matchedOsasto - baseOsasto;
+
+  document.getElementById('rule-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-lbl">Sääntöön sopivat</div><div class="stat-val">${n}</div><div class="stat-sub">${N>0?fmtNum(100*n/N,1):'0'} % kaikista</div></div>
+    <div class="stat-box stat-teal"><div class="stat-lbl">Osastohoitoon (%)</div><div class="stat-val">${fmtNum(matchedOsasto,1)} %</div></div>
+    <div class="stat-box ${improvement>=0?'stat-green':'stat-red'}"><div class="stat-lbl">Parannus</div><div class="stat-val">${improvement>=0?'+':''}${fmtNum(improvement,1)} %-yks.</div></div>
+  `;
+
+  // Comparison bar chart
+  const compData = [
+    {_group:'Kaikki potilaat', dispo:'Kotiutunut'},
+    {_group:'Kaikki potilaat', dispo:'Osastolle'},
+    {_group:'Säännön mukaiset', dispo:'Kotiutunut'},
+    {_group:'Säännön mukaiset', dispo:'Osastolle'}
+  ];
+  // We need to build pseudo-data for the stacked bar
+  const allOsasto = FILTERED.filter(d=>d.dispo==='Osastolle').length;
+  const allKoti = FILTERED.filter(d=>d.dispo==='Kotiutunut').length;
+  const mOsasto = matched.filter(d=>d.dispo==='Osastolle').length;
+  const mKoti = matched.filter(d=>d.dispo==='Kotiutunut').length;
+
+  // Build a simple comparison chart manually
+  clearChart('chart-rule');
+  const cWidth = getContainerWidth('chart-rule');
+  if (cWidth > 50) {
+    const cHeight = 200;
+    const cm = {top:15,right:20,bottom:40,left:140};
+    const cw = cWidth-cm.left-cm.right;
+    const ch = cHeight-cm.top-cm.bottom;
+
+    const svg = d3.select('#chart-rule').append('svg')
+      .attr('viewBox',`0 0 ${cWidth} ${cHeight}`)
+      .attr('preserveAspectRatio','xMidYMid meet');
+    const g = svg.append('g').attr('transform',`translate(${cm.left},${cm.top})`);
+
+    const groups = ['Kaikki potilaat','Säännön mukaiset'];
+    const y = d3.scaleBand().domain(groups).range([0,ch]).padding(0.3);
+    const x = d3.scaleLinear().domain([0,100]).range([0,cw]);
+
+    g.append('g').attr('class','grid').call(d3.axisBottom(x).ticks(5).tickSize(ch).tickFormat(d=>d+'%'));
+
+    const barData = [
+      {group:'Kaikki potilaat', koti: N>0?100*allKoti/N:0, osas: N>0?100*allOsasto/N:0},
+      {group:'Säännön mukaiset', koti: n>0?100*mKoti/n:0, osas: n>0?100*mOsasto/n:0}
+    ];
+
+    barData.forEach(bd => {
+      // Kotiutunut bar
+      g.append('rect').attr('x',0).attr('y',y(bd.group)).attr('width',x(bd.koti)).attr('height',y.bandwidth())
+        .attr('fill',DISPO_COLORS['Kotiutunut']).attr('rx',2);
+      // Osastolle bar
+      g.append('rect').attr('x',x(bd.koti)).attr('y',y(bd.group)).attr('width',x(bd.osas)).attr('height',y.bandwidth())
+        .attr('fill',DISPO_COLORS['Osastolle']).attr('rx',2);
+      // Labels
+      if (bd.koti > 8) {
+        g.append('text').attr('x',x(bd.koti/2)).attr('y',y(bd.group)+y.bandwidth()/2+4)
+          .attr('text-anchor','middle').attr('fill','#fff').attr('font-size','11px').attr('font-weight','600')
+          .attr('font-family','var(--font-mono)').text(fmtNum(bd.koti,1)+'%');
+      }
+      if (bd.osas > 8) {
+        g.append('text').attr('x',x(bd.koti+bd.osas/2)).attr('y',y(bd.group)+y.bandwidth()/2+4)
+          .attr('text-anchor','middle').attr('fill','#fff').attr('font-size','11px').attr('font-weight','600')
+          .attr('font-family','var(--font-mono)').text(fmtNum(bd.osas,1)+'%');
+      }
+    });
+
+    g.append('g').call(d3.axisLeft(y)).selectAll('text').attr('font-size','11px').attr('font-family','var(--font-body)');
+  }
+
+  // Comparison table
+  const allOsastoPct = N>0?100*allOsasto/N:0;
+  const allKotiPct = N>0?100*allKoti/N:0;
+  const mOsastoPct = n>0?100*mOsasto/n:0;
+  const mKotiPct = n>0?100*mKoti/n:0;
+
+  document.getElementById('table-rule').innerHTML = `
+    <table class="ctable">
+      <thead><tr><th></th><th>Kaikki</th><th>Sääntö</th><th>Osuus</th></tr></thead>
+      <tbody>
+        <tr><th>Potilaita</th><td>${N}</td><td>${n}</td><td>${N>0?fmtNum(100*n/N,1):'0'} %</td></tr>
+        <tr><th>Osastolle</th><td>${allOsasto}</td><td>${mOsasto}</td><td>${allOsasto>0?fmtNum(100*mOsasto/allOsasto,1):'0'} %</td></tr>
+        <tr><th>Osastolle-%</th><td>${fmtNum(allOsastoPct,1)} %</td><td>${fmtNum(mOsastoPct,1)} %</td><td>${improvement>=0?'+':''}${fmtNum(improvement,1)} %-yks.</td></tr>
+        <tr><th>Kotiutunut</th><td>${allKoti}</td><td>${mKoti}</td><td>${allKoti>0?fmtNum(100*mKoti/allKoti,1):'0'} %</td></tr>
+        <tr><th>Kotiutus-%</th><td>${fmtNum(allKotiPct,1)} %</td><td>${fmtNum(mKotiPct,1)} %</td><td>${(mKotiPct-allKotiPct)>=0?'+':''}${fmtNum(mKotiPct-allKotiPct,1)} %-yks.</td></tr>
+      </tbody>
+    </table>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILITY: TOGGLE HELPERS
+// ═══════════════════════════════════════════════════════
+function setToggle(btn) {
+  btn.parentElement.querySelectorAll('.tog-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setToggleSub(btn, groupId) {
+  document.querySelectorAll('#'+groupId+' .tog-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function toggleMultiDrop(dropdownId) {
+  const dd = document.getElementById(dropdownId);
+  dd.classList.toggle('open');
+}
+
+// Close multi-select dropdowns when clicking outside
+document.addEventListener('click', e => {
+  document.querySelectorAll('.multi-select-dropdown.open').forEach(dd => {
+    if (!dd.parentElement.contains(e.target)) dd.classList.remove('open');
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+// WINDOW RESIZE
+// ═══════════════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  Object.keys(panelBuilt).forEach(k => panelBuilt[k] = false);
+  renderCurrentTab();
+});
+
+</script>
+</body>
+</html>
