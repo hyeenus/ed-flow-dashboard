@@ -1,0 +1,803 @@
+---
+title: "Määrällinen tutkimus"
+subtitle: "Tieteellä johtaminen - FinnEM Akatemia Workshop 2026"
+format:
+  revealjs:
+    smaller: true
+    incremental: true
+    theme: simple
+    width: 1050
+    height: 700
+    css: slides-custom.css
+editor: visual
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+load("Shiny_app/ed_sample.rdata")
+
+set.seed(2026)
+ed <- df[sample(nrow(df), 800), ]
+
+ed_export <- ed |>
+  transmute(
+    ika = age,
+    sukupuoli = ifelse(gender == "Female", "Nainen", "Mies"),
+    jatkotoimenpide = ifelse(disposition == "Admit", "Osastohoito", "Kotiutus"),
+    esi = as.integer(as.character(esi)),
+    saapumistapa = case_match(as.character(arrivalmode),
+      "ambulance" ~ "Ambulanssi", "Car" ~ "Auto",
+      "Walk-in" ~ "Kävellen", .default = "Muu"),
+    viikonpaiva = case_match(as.character(arrivalday),
+      "Monday" ~ "Ma", "Tuesday" ~ "Ti", "Wednesday" ~ "Ke",
+      "Thursday" ~ "To", "Friday" ~ "Pe", "Saturday" ~ "La", "Sunday" ~ "Su"),
+    syke = triage_vital_hr,
+    systolinen = triage_vital_sbp,
+    hengitystaajuus = triage_vital_rr,
+    lampo = round((triage_vital_temp - 32) * 5 / 9, 1),
+    spo2 = triage_vital_o2,
+    sydanlaake = as.integer(meds_cardiovascular),
+    aiemmat_kaynti = n_edvisits
+  )
+
+# Chi-square: Ambulanssi vs Kävellen
+ak <- ed_export |> filter(saapumistapa %in% c("Ambulanssi", "Kävellen"))
+chi_res <- chisq.test(table(ak$saapumistapa, ak$jatkotoimenpide))
+
+ojs_define(ed_raw = ed_export)
+ojs_define(chi_p_text = paste0("p < 0.000000000000001"))
+```
+
+------------------------------------------------------------------------
+
+<https://www.dropbox.com/scl/fo/d4514juu76yqsqk4ko0ia/ABNPErqO6y0MBdUS7B55_jg?rlkey=91oa9n9oawfzs8fqq6490rid8&dl=0>
+
+------------------------------------------------------------------------
+
+## Määrällinen tutkimus
+
+### **Tavoite:**
+
+::::: columns
+::: {.column width="40%"}
+Arvioida kahden tekijän välistä:
+
+-   suhdetta
+
+-   sen suuruutta
+
+-   ja merkitystä
+:::
+
+::: {.column width="60%"}
+![](images/maarallinen_tutkimus.webp)
+:::
+:::::
+
+## **Tehtävä:**
+
+1.  Tutki käytössä olevaa dataa (<https://anssis.shinyapps.io/ed_flow/> ← Aineisto)
+
+2.  Valitse kaksi asiaa joiden yhteyttä haluat tutkia
+
+3.  Luo hypoteesi ja tavoite tutkimukselle → Kirjaa ne posteriin
+
+![](ed_flow_qrcode.png)
+
+## Mitattavat muuttujat
+
+::::: columns
+::: {.column width="40%"}
+Mitattavan muuttujan tyyppi vaikuttaa merkittävästi lähestymistapaan
+
+-   Luokitteleva
+
+-   Järjestys
+
+-   Jatkuva
+:::
+
+::: {.column width="60%"}
+![](muuttujatyypit.webp){fig-align="right"}
+:::
+:::::
+
+## **Luokitteleva**
+
+(aka kategorinen, faktori)
+
+-   Selvät kategoriat
+
+-   Esim. sukupuoli, saapumistapa päivystykseen
+
+-   Ei välimuotoja
+
+-   Tunnusluku: Moodi
+
+![](images/luokittelevamuuttuja.webp)
+
+## **Binääri**
+
+(aka. Binomiaalinen, looginen, boolean, bivariaatti, tosiarvo)
+
+::::: columns
+::: {.column width="40%"}
+-   Luokittelevan muuttujan erityistapaus
+
+-   Voi saada vain yhden kahdesta arvosta
+
+-   Osastohoito / Kotiutus
+
+-   Rintakipu: Kyllä / Ei
+
+-   0/1
+:::
+
+::: {.column width="60%"}
+![](images/binaari_muuttuja.webp)
+:::
+:::::
+
+## **Ordinaali**
+
+(aka. järjestysmuuttuja)
+
+::::: columns
+::: {.column width="40%"}
+-   Luokitteleva muuttuja, jolla voidaan määritellä järjestys
+
+-   Askel luokkien välillä ei tarvitse olla saman suuruinen
+
+-   Luokittelevan ja jatkuvan välimuoto
+
+-   Esim. ESI-triageluokka (1–5)
+
+-   Tunnuslukuja: moodi, mediaani
+:::
+
+::: {.column width="60%"}
+![](images/ordinaali.png)
+:::
+:::::
+
+## **Jatkuva**
+
+(aka. skalaari, mitta-asteikko)
+
+::::: columns
+::: {.column width="40%"}
+-   Voi saada minkä hyvänsä lukuarvon
+
+-   Esim. ikä, syke, verenpaine
+
+-   Tunnuslukuja: moodi, mediaani, keskiarvo
+:::
+
+::: {.column width="60%"}
+![](images/jatkuva_muuttuja.webp)
+:::
+:::::
+
+## Kuvaajat
+
+*"The greatest value of a picture is when it forces us to notice what we never expected to see."*
+
+*— John Tukey, amerikkalainen tilastotieteilijä*
+
+## Pylväskuvaaja — yksi luokitteleva muuttuja
+
+:::{.nonincremental}
+Pylväskuvaaja näyttää havaintojen jakautumisen luokkiin.
+:::
+
+```{ojs}
+//| echo: false
+ed = transpose(ed_raw)
+```
+
+```{ojs}
+//| echo: false
+viewof tapa_mode = Inputs.radio(["Lukumäärä", "Prosentti"], {value: "Lukumäärä", label: "Näytä:"})
+```
+
+```{ojs}
+//| echo: false
+{
+  const order = ["Ambulanssi", "Auto", "Kävellen", "Muu"];
+  const valid = ed.filter(d => d.saapumistapa != null);
+  const n = valid.length;
+  const counts = d3.rollup(valid, v => v.length, d => d.saapumistapa);
+  const data = order.filter(t => counts.has(t)).map(t => ({
+    tapa: t, value: tapa_mode === "Prosentti" ? counts.get(t) / n * 100 : counts.get(t)
+  }));
+
+  return Plot.plot({
+    width: Math.min(850, width),
+    height: 330,
+    x: {label: null, domain: data.map(d => d.tapa)},
+    y: {label: tapa_mode === "Prosentti" ? "%" : "Lukumäärä", grid: true},
+    marks: [
+      Plot.barY(data, {x: "tapa", y: "value", fill: "#1B4F8A", tip: true}),
+      Plot.ruleY([0])
+    ]
+  });
+}
+```
+
+:::{.fig-caption .nonincremental}
+Saapumistapa päivystykseen (N = 800). Luokitteleva muuttuja: kategorioilla ei ole järjestystä.
+:::
+
+## Pinottu pylväskuvaaja — kaksi luokittelevaa muuttujaa
+
+:::{.nonincremental}
+ESI-luokka × jatkotoimenpide. Vaihda näkymää — huomaa miten tulkinta muuttuu.
+:::
+
+```{ojs}
+//| echo: false
+viewof stack_mode = Inputs.radio(["Lukumäärä", "Prosentti"], {value: "Lukumäärä", label: "Näytä:"})
+```
+
+```{ojs}
+//| echo: false
+{
+  const valid = ed.filter(d => d.esi != null);
+  const esiLabels = [1,2,3,4,5].map(e => "ESI " + e);
+  const grouped = d3.flatRollup(valid, v => v.length, d => "ESI " + d.esi, d => d.jatkotoimenpide);
+  const totals = d3.rollup(valid, v => v.length, d => "ESI " + d.esi);
+
+  const data = grouped.map(([esi, jatko, count]) => ({
+    esi, jatko,
+    value: stack_mode === "Prosentti" ? count / totals.get(esi) * 100 : count
+  }));
+
+  return Plot.plot({
+    width: Math.min(850, width),
+    height: 330,
+    x: {label: null, domain: esiLabels},
+    y: {label: stack_mode === "Prosentti" ? "%" : "Lukumäärä", grid: true},
+    color: {domain: ["Osastohoito", "Kotiutus"], range: ["#1B4F8A", "#0D9488"], legend: true},
+    marks: [
+      Plot.barY(data, Plot.stackY({x: "esi", y: "value", fill: "jatko", tip: true,
+        title: d => `${d.esi}: ${d.jatko} ${d.value.toFixed(stack_mode === "Prosentti" ? 1 : 0)}${stack_mode === "Prosentti" ? " %" : ""}`})),
+      Plot.ruleY([0])
+    ]
+  });
+}
+```
+
+:::{.fig-caption .nonincremental}
+ESI-triageluokka × jatkotoimenpide (N = 800). Prosenttinäkymä paljastaa: mitä kiireellisempi luokitus, sitä suurempi osuus otetaan osastohoitoon.
+:::
+
+## Boxplot — jatkuva muuttuja
+
+:::{.nonincremental}
+60 aikuista pituusjärjestyksessä. Miten jakauma tiivistetään boxplotiksi?
+:::
+
+```{ojs}
+//| echo: false
+viewof box_step = Inputs.radio(
+  [0, 1, 2, 3, 4],
+  {value: 0, label: "Vaihe:",
+   format: x => ["① Järjestys", "② Mediaani", "③ Kvartiilit", "④ Viikset", "⑤ Outlierit"][x]}
+)
+```
+
+```{ojs}
+//| echo: false
+{
+  const heights = [
+    140, 143, 150, 152, 154, 155, 157, 158, 159, 160, 161, 161, 162, 163, 164,
+    164, 165, 165, 166, 166, 167, 167, 168, 168, 168, 169, 169, 170, 170, 170,
+    170, 170, 171, 171, 171, 172, 172, 173, 173, 174, 174, 175, 175, 175, 176,
+    176, 177, 178, 179, 180, 181, 182, 184, 186, 188, 190, 192, 194, 197, 204
+  ];
+  const n = 60;
+  const medIdx = 29, q1Idx = 14, q3Idx = 44;
+  const med = 170, q1 = 164, q3 = 176;
+  const wLoIdx = 2, wHiIdx = 57; // 150..194
+  const outlierIdx = new Set([0, 1, 58, 59]);
+
+  const W = Math.min(950, width), H = 380;
+  const ml = 8, mr = 8, mt = 5, mb = 90;
+  const iw = W - ml - mr, ih = H - mt - mb;
+  const baseY = mt + ih;
+  const figW = iw / n;
+  const hScale = d3.scaleLinear().domain([135, 210]).range([20, ih - 5]);
+
+  const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).style("max-width", "100%");
+  const g = svg.append("g").attr("transform", `translate(${ml},0)`);
+
+  const gray = "#b0b8c4", blue = "#1B4F8A", teal = "#0D9488", lightGray = "#d4d9e0", red = "#e11d48";
+  const fx = (i) => i * figW + figW / 2;
+
+  // Figure colors per step
+  heights.forEach((h, i) => {
+    let color = gray;
+    if (box_step >= 1 && i === medIdx) color = blue;
+    if (box_step >= 2 && (i === q1Idx || i === q3Idx)) color = teal;
+    if (box_step >= 2 && i > q1Idx && i < q3Idx && i !== medIdx) color = lightGray;
+    if (box_step >= 2 && (i < q1Idx || i > q3Idx) && !outlierIdx.has(i)) color = "#ccc";
+    if (box_step >= 4 && outlierIdx.has(i)) color = red;
+
+    const cx = fx(i);
+    const pH = hScale(h);
+    const headR = 2.5, headY = baseY - pH, neckY = headY + headR;
+    const torsoEnd = baseY - pH * 0.35;
+
+    g.append("circle").attr("cx", cx).attr("cy", headY).attr("r", headR).attr("fill", color);
+    g.append("line").attr("x1", cx).attr("y1", neckY).attr("x2", cx).attr("y2", torsoEnd)
+     .attr("stroke", color).attr("stroke-width", 1.5).attr("stroke-linecap", "round");
+    g.append("line").attr("x1", cx).attr("y1", torsoEnd).attr("x2", cx - 3.5).attr("y2", baseY)
+     .attr("stroke", color).attr("stroke-width", 1.2).attr("stroke-linecap", "round");
+    g.append("line").attr("x1", cx).attr("y1", torsoEnd).attr("x2", cx + 3.5).attr("y2", baseY)
+     .attr("stroke", color).attr("stroke-width", 1.2).attr("stroke-linecap", "round");
+
+    // Outlier height labels above figure
+    if (box_step >= 4 && outlierIdx.has(i)) {
+      g.append("text").attr("x", cx).attr("y", headY - 6)
+       .attr("text-anchor", "middle").attr("font-size", 8).attr("fill", red).attr("font-weight", "bold")
+       .text(h + " cm");
+    }
+  });
+
+  // --- Annotations & boxplot build progressively ---
+  const bpY = baseY + 65;
+
+  // Step 1+: Median annotation + median line in boxplot area
+  if (box_step >= 1) {
+    g.append("text").attr("x", fx(medIdx)).attr("y", baseY + 15)
+     .attr("text-anchor", "middle").attr("font-size", 10).attr("fill", blue).attr("font-weight", "bold")
+     .text(`Mediaani = ${med} cm`);
+    g.append("text").attr("x", fx(medIdx)).attr("y", baseY + 25)
+     .attr("text-anchor", "middle").attr("font-size", 9).attr("fill", blue)
+     .text(`(${medIdx + 1}. henkilö)`);
+    // Median line in boxplot zone
+    g.append("line").attr("x1", fx(medIdx)).attr("x2", fx(medIdx))
+     .attr("y1", bpY - 10).attr("y2", bpY + 10).attr("stroke", blue).attr("stroke-width", 2.5);
+  }
+
+  // Step 2+: Quartile annotations + box
+  if (box_step >= 2) {
+    // Q1 label — left-aligned to avoid overlap with median
+    g.append("text").attr("x", fx(q1Idx)).attr("y", baseY + 15)
+     .attr("text-anchor", "end").attr("font-size", 9.5).attr("fill", teal).attr("font-weight", "bold")
+     .text(`25 % = ${q1} cm`);
+    g.append("text").attr("x", fx(q1Idx)).attr("y", baseY + 25)
+     .attr("text-anchor", "end").attr("font-size", 8.5).attr("fill", teal)
+     .text(`(${q1Idx + 1}. henkilö)`);
+    // Q3 label — right-aligned
+    g.append("text").attr("x", fx(q3Idx)).attr("y", baseY + 15)
+     .attr("text-anchor", "start").attr("font-size", 9.5).attr("fill", teal).attr("font-weight", "bold")
+     .text(`75 % = ${q3} cm`);
+    g.append("text").attr("x", fx(q3Idx)).attr("y", baseY + 25)
+     .attr("text-anchor", "start").attr("font-size", 8.5).attr("fill", teal)
+     .text(`(${q3Idx + 1}. henkilö)`);
+    // Box
+    const boxL = fx(q1Idx) - figW / 2, boxR = fx(q3Idx) + figW / 2;
+    g.append("rect").attr("x", boxL).attr("y", bpY - 10)
+     .attr("width", boxR - boxL).attr("height", 20)
+     .attr("fill", "#1B4F8A18").attr("stroke", "#333").attr("stroke-width", 1.5);
+    // Re-draw median on top of box
+    g.append("line").attr("x1", fx(medIdx)).attr("x2", fx(medIdx))
+     .attr("y1", bpY - 10).attr("y2", bpY + 10).attr("stroke", blue).attr("stroke-width", 2.5);
+  }
+
+  // Step 3+: Whiskers (non-outlier range)
+  if (box_step >= 3) {
+    const boxL = fx(q1Idx) - figW / 2, boxR = fx(q3Idx) + figW / 2;
+    // Left whisker
+    g.append("line").attr("x1", fx(wLoIdx)).attr("x2", boxL)
+     .attr("y1", bpY).attr("y2", bpY).attr("stroke", "#333").attr("stroke-width", 1.5);
+    g.append("line").attr("x1", fx(wLoIdx)).attr("x2", fx(wLoIdx))
+     .attr("y1", bpY - 7).attr("y2", bpY + 7).attr("stroke", "#333").attr("stroke-width", 1.5);
+    // Right whisker
+    g.append("line").attr("x1", boxR).attr("x2", fx(wHiIdx))
+     .attr("y1", bpY).attr("y2", bpY).attr("stroke", "#333").attr("stroke-width", 1.5);
+    g.append("line").attr("x1", fx(wHiIdx)).attr("x2", fx(wHiIdx))
+     .attr("y1", bpY - 7).attr("y2", bpY + 7).attr("stroke", "#333").attr("stroke-width", 1.5);
+    // Whisker labels
+    g.append("text").attr("x", fx(wLoIdx)).attr("y", bpY + 18)
+     .attr("text-anchor", "middle").attr("font-size", 8).attr("fill", "#555")
+     .text(heights[wLoIdx] + " cm");
+    g.append("text").attr("x", fx(wHiIdx)).attr("y", bpY + 18)
+     .attr("text-anchor", "middle").attr("font-size", 8).attr("fill", "#555")
+     .text(heights[wHiIdx] + " cm");
+  }
+
+  // Step 4+: Outliers
+  if (box_step >= 4) {
+    const oList = [...outlierIdx];
+    // Low outliers — stagger labels to avoid overlap
+    g.append("circle").attr("cx", fx(0)).attr("cy", bpY).attr("r", 3)
+     .attr("fill", "none").attr("stroke", red).attr("stroke-width", 1.5);
+    g.append("text").attr("x", fx(0)).attr("y", bpY + 18)
+     .attr("text-anchor", "middle").attr("font-size", 8).attr("fill", red)
+     .text(heights[0] + " cm");
+
+    g.append("circle").attr("cx", fx(1)).attr("cy", bpY).attr("r", 3)
+     .attr("fill", "none").attr("stroke", red).attr("stroke-width", 1.5);
+    g.append("text").attr("x", fx(1)).attr("y", bpY - 15)
+     .attr("text-anchor", "middle").attr("font-size", 8).attr("fill", red)
+     .text(heights[1] + " cm");
+
+    // High outliers — stagger
+    g.append("circle").attr("cx", fx(58)).attr("cy", bpY).attr("r", 3)
+     .attr("fill", "none").attr("stroke", red).attr("stroke-width", 1.5);
+    g.append("text").attr("x", fx(58)).attr("y", bpY - 15)
+     .attr("text-anchor", "middle").attr("font-size", 8).attr("fill", red)
+     .text(heights[58] + " cm");
+
+    g.append("circle").attr("cx", fx(59)).attr("cy", bpY).attr("r", 3)
+     .attr("fill", "none").attr("stroke", red).attr("stroke-width", 1.5);
+    g.append("text").attr("x", fx(59)).attr("y", bpY + 18)
+     .attr("text-anchor", "middle").attr("font-size", 8).attr("fill", red)
+     .text(heights[59] + " cm");
+  }
+
+  return svg.node();
+}
+```
+
+## Boxplot — jatkuva × luokitteleva
+
+:::{.nonincremental}
+Eroavatko osastohoitoon otetut kotiutetuista?
+:::
+
+```{ojs}
+//| echo: false
+viewof box_var = Inputs.select(
+  ["ika", "syke", "systolinen", "hengitystaajuus"],
+  {value: "ika", label: "Muuttuja:",
+   format: x => ({ika:"Ikä (v)", syke:"Syke (bpm)", systolinen:"Syst. RR (mmHg)", hengitystaajuus:"Heng.taaj. (/min)"}[x])}
+)
+```
+
+```{ojs}
+//| echo: false
+{
+  const varName = box_var;
+  const labels = {ika:"Ikä (v)", syke:"Syke (bpm)", systolinen:"Syst. verenpaine (mmHg)", hengitystaajuus:"Hengitystaajuus (/min)"};
+  const groups = ["Osastohoito", "Kotiutus"];
+  const colors = {"Osastohoito": "#1B4F8A", "Kotiutus": "#0D9488"};
+
+  const W = Math.min(850, width), H = 220;
+  const ml = 100, mr = 25, mt = 10, mb = 35;
+  const iw = W - ml - mr, ih = H - mt - mb;
+
+  // Compute stats per group
+  const allVals = [];
+  const stats = {};
+  for (const grp of groups) {
+    const vals = ed.filter(d => d.jatkotoimenpide === grp && d[varName] != null)
+                   .map(d => d[varName]).sort((a, b) => a - b);
+    allVals.push(...vals);
+    const q1 = d3.quantile(vals, 0.25);
+    const med = d3.quantile(vals, 0.5);
+    const q3 = d3.quantile(vals, 0.75);
+    const iqr = q3 - q1;
+    const wLo = d3.min(vals.filter(v => v >= q1 - 1.5 * iqr));
+    const wHi = d3.max(vals.filter(v => v <= q3 + 1.5 * iqr));
+    const outliers = vals.filter(v => v < wLo || v > wHi);
+    stats[grp] = {q1, med, q3, wLo, wHi, outliers};
+  }
+
+  const xScale = d3.scaleLinear().domain(d3.extent(allVals)).nice().range([0, iw]);
+  const boxH = 36;
+
+  const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).style("max-width", "100%");
+  const g = svg.append("g").attr("transform", `translate(${ml},${mt})`);
+
+  // X axis
+  g.append("g").attr("transform", `translate(0,${ih})`)
+   .call(d3.axisBottom(xScale).ticks(8))
+   .selectAll("text").attr("font-size", 11);
+  g.append("text").attr("x", iw / 2).attr("y", ih + 30)
+   .attr("text-anchor", "middle").attr("font-size", 12).text(labels[varName]);
+
+  groups.forEach((grp, i) => {
+    const y = ih * (i === 0 ? 0.3 : 0.7);
+    const s = stats[grp];
+    const c = colors[grp];
+
+    // Label
+    g.append("text").attr("x", -10).attr("y", y + 4)
+     .attr("text-anchor", "end").attr("font-size", 12).attr("fill", c).attr("font-weight", 600).text(grp);
+
+    // Whisker lines (only outside the box)
+    g.append("line").attr("x1", xScale(s.wLo)).attr("x2", xScale(s.q1))
+     .attr("y1", y).attr("y2", y).attr("stroke", c).attr("stroke-width", 1.5);
+    g.append("line").attr("x1", xScale(s.q3)).attr("x2", xScale(s.wHi))
+     .attr("y1", y).attr("y2", y).attr("stroke", c).attr("stroke-width", 1.5);
+    // Caps
+    [s.wLo, s.wHi].forEach(v => {
+      g.append("line").attr("x1", xScale(v)).attr("x2", xScale(v))
+       .attr("y1", y - boxH / 3).attr("y2", y + boxH / 3)
+       .attr("stroke", c).attr("stroke-width", 1.5);
+    });
+    // Box
+    g.append("rect").attr("x", xScale(s.q1)).attr("y", y - boxH / 2)
+     .attr("width", Math.max(1, xScale(s.q3) - xScale(s.q1))).attr("height", boxH)
+     .attr("fill", c).attr("fill-opacity", 0.2).attr("stroke", c).attr("stroke-width", 1.5);
+    // Median
+    g.append("line").attr("x1", xScale(s.med)).attr("x2", xScale(s.med))
+     .attr("y1", y - boxH / 2).attr("y2", y + boxH / 2)
+     .attr("stroke", c).attr("stroke-width", 2.5);
+    // Outliers
+    s.outliers.forEach(v => {
+      g.append("circle").attr("cx", xScale(v)).attr("cy", y)
+       .attr("r", 3).attr("fill", "none").attr("stroke", c).attr("stroke-width", 1.2);
+    });
+  });
+
+  return svg.node();
+}
+```
+
+## Histogrammi — jakauman muoto
+
+:::{.nonincremental}
+Pylvään korkeus = havaintojen lukumäärä. Kokeile miten pylväiden lukumäärä muuttaa tulkintaa.
+:::
+
+```{ojs}
+//| echo: false
+viewof hg_bins = Inputs.range([5, 50], {value: 20, step: 1, label: "Pylväitä:", width: 220})
+```
+
+```{ojs}
+//| echo: false
+{
+  const ages = ed.filter(d => d.ika != null).map(d => d.ika);
+  return Plot.plot({
+    width: Math.min(850, width),
+    height: 290,
+    x: {label: "Ikä (v)"},
+    y: {label: "Lukumäärä", grid: true},
+    marks: [
+      Plot.rectY(ages, Plot.binX({y: "count"}, {x: d => d, thresholds: hg_bins, fill: "#1B4F8A"})),
+      Plot.ruleY([0])
+    ]
+  });
+}
+```
+
+:::{.fig-caption .nonincremental}
+Päivystyspotilaiden ikäjakauma (N = 800). Jokainen pylväs kuvaa tietyn ikähaarukan potilasmäärää. Vähällä pylväsmäärällä näkyy yleiskuva, suurella yksityiskohdat.
+:::
+
+## Scatter-plot — kaksi jatkuvaa muuttujaa
+
+:::{.nonincremental}
+Jokainen piste = yksi potilas. Näkyykö ikä- ja verenpainemuuttujien välillä yhteys?
+:::
+
+```{ojs}
+//| echo: false
+viewof scatter_color = Inputs.select(["Ei", "esi", "sydanlaake"], {
+  label: "Väritys:", format: x => ({Ei: "—", esi: "ESI-luokka", sydanlaake: "Sydänlääkitys"}[x])
+})
+```
+
+```{ojs}
+//| echo: false
+viewof scatter_reg = Inputs.toggle({label: "Sovita regressiosuora", value: false})
+```
+
+```{ojs}
+//| echo: false
+{
+  const valid = ed.filter(d => d.ika != null && d.systolinen != null);
+  const colorVar = scatter_color;
+  const showReg = scatter_reg;
+  const marks = [];
+
+  let coloredData, colorChannel;
+  if (colorVar === "esi") {
+    coloredData = valid.filter(d => d.esi != null).map(d => ({...d, _c: "ESI " + d.esi}));
+    colorChannel = "_c";
+  } else if (colorVar === "sydanlaake") {
+    coloredData = valid.map(d => ({...d, _c: d.sydanlaake ? "Sydänlääkitys" : "Ei sydänlääk."}));
+    colorChannel = "_c";
+  } else {
+    coloredData = valid;
+    colorChannel = null;
+  }
+
+  marks.push(Plot.dot(coloredData, {
+    x: "ika", y: "systolinen", r: 3, opacity: 0.45,
+    fill: colorChannel || "#1B4F8A",
+    tip: true,
+    title: d => `Ikä: ${d.ika}v, RR: ${d.systolinen} mmHg`
+  }));
+
+  if (showReg) {
+    marks.push(Plot.linearRegressionY(coloredData, {
+      x: "ika", y: "systolinen",
+      stroke: colorChannel || "#333",
+      strokeWidth: 2
+    }));
+  }
+
+  return Plot.plot({
+    width: Math.min(950, width),
+    height: 400,
+    x: {label: "Ikä (v)"},
+    y: {label: "Syst. verenpaine (mmHg)", grid: true},
+    color: colorChannel ? {legend: true} : undefined,
+    marks
+  });
+}
+```
+
+## Jatkotoimenpide eri ryhmissä
+
+:::{.nonincremental}
+Miten osastohoitoon otettujen osuus vaihtelee ryhmittäin?
+:::
+
+```{ojs}
+//| echo: false
+viewof adm_group = Inputs.radio(
+  ["esi", "saapumistapa", "sukupuoli", "viikonpaiva"],
+  {value: "esi", label: "Ryhmittely:",
+   format: x => ({esi:"ESI-luokka", saapumistapa:"Saapumistapa", sukupuoli:"Sukupuoli", viikonpaiva:"Viikonpäivä"}[x])}
+)
+```
+
+```{ojs}
+//| echo: false
+{
+  const valid = ed.filter(d => d[adm_group] != null);
+  const grouped = d3.flatRollup(valid, v => v.length, d => adm_group === "esi" ? "ESI " + d[adm_group] : d[adm_group], d => d.jatkotoimenpide);
+  const totals = d3.rollup(valid, v => v.length, d => adm_group === "esi" ? "ESI " + d[adm_group] : d[adm_group]);
+
+  const data = grouped.map(([grp, jatko, count]) => ({
+    grp, jatko, pct: count / totals.get(grp) * 100
+  }));
+
+  let domain;
+  if (adm_group === "esi") domain = ["ESI 1","ESI 2","ESI 3","ESI 4","ESI 5"];
+  else if (adm_group === "saapumistapa") domain = ["Ambulanssi","Auto","Kävellen","Muu"];
+  else if (adm_group === "viikonpaiva") domain = ["Ma","Ti","Ke","To","Pe","La","Su"];
+
+  return Plot.plot({
+    width: Math.min(850, width),
+    height: 330,
+    x: {label: null, domain},
+    y: {label: "%", domain: [0, 100], grid: true},
+    color: {domain: ["Osastohoito","Kotiutus"], range: ["#1B4F8A","#0D9488"], legend: true},
+    marks: [
+      Plot.barY(data, Plot.stackY({x: "grp", y: "pct", fill: "jatko", tip: true,
+        title: d => `${d.grp}: ${d.jatko} ${d.pct.toFixed(1)} %`})),
+      Plot.ruleY([0])
+    ]
+  });
+}
+```
+
+## **Tehtävä:**
+
+1.  Tutki kuvien avulla valitsemiesi muuttujien välisiä yhteyksiä (<https://anssis.shinyapps.io/ed_flow/>)
+
+    -   Pohdi tukevatko löydökset hypoteesiasi
+
+2.  Tutki myös muiden muuttujien yhteyttä valitsemiisi muuttujiin
+
+    -   Pohdi voiko jokin näistä olla sekoittava tekijä
+
+    -   Tarvittaessa kokeile erilaisia rajauksia (eli tee sensitiivisyysanalyysi)
+
+3.  Valitse parhaiten tutkimuskysymykseen vastaava kuvaaja → Siirrä se posteriin
+
+![](ed_flow_qrcode.png)
+
+# Menetelmät
+
+## Osuuksien vertailu
+
+:::{.nonincremental}
+-   Ristiin taulukoidaan tutkittavat luokittelevat muuttujat
+-   Mikä on todennäköisyys saada vähintään näin suuri ero sattumalta?
+-   → Sen kertoo **χ²-testi** (khiin neliö -testi)
+:::
+
+```{ojs}
+//| echo: false
+{
+  const valid = ed.filter(d => d.saapumistapa === "Ambulanssi" || d.saapumistapa === "Kävellen");
+  const tapas = ["Ambulanssi", "Kävellen"];
+  const rows = tapas.map(t => {
+    const sub = valid.filter(d => d.saapumistapa === t);
+    const admit = sub.filter(d => d.jatkotoimenpide === "Osastohoito").length;
+    const disc = sub.length - admit;
+    return {tapa: t, osasto: admit, koti: disc, n: sub.length,
+            osasto_pct: (admit / sub.length * 100).toFixed(0),
+            koti_pct: (disc / sub.length * 100).toFixed(0)};
+  });
+  const tA = rows.reduce((s, r) => s + r.osasto, 0);
+  const tD = rows.reduce((s, r) => s + r.koti, 0);
+  const tN = tA + tD;
+
+  return html`<table style="font-size:0.85em; border-collapse:collapse; width:90%; max-width:650px; margin:0.3em auto;">
+    <tr style="border-bottom:2px solid #333;"><th style="text-align:left;padding:5px 12px;">Saapumistapa</th><th style="padding:5px 12px;">Osastohoito</th><th style="padding:5px 12px;">Kotiutus</th><th style="padding:5px 12px;">Yhteensä</th></tr>
+    ${rows.map(r => html`<tr style="border-bottom:1px solid #ddd;"><td style="padding:5px 12px;">${r.tapa}</td><td style="text-align:center;padding:5px 12px;">${r.osasto} (${r.osasto_pct} %)</td><td style="text-align:center;padding:5px 12px;">${r.koti} (${r.koti_pct} %)</td><td style="text-align:center;padding:5px 12px;">${r.n}</td></tr>`)}
+    <tr style="border-top:2px solid #333;font-weight:bold;"><td style="padding:5px 12px;">Yhteensä</td><td style="text-align:center;padding:5px 12px;">${tA} (${(tA/tN*100).toFixed(0)} %)</td><td style="text-align:center;padding:5px 12px;">${tD} (${(tD/tN*100).toFixed(0)} %)</td><td style="text-align:center;padding:5px 12px;">${tN}</td></tr>
+  </table>`;
+}
+```
+
+```{ojs}
+//| echo: false
+viewof show_p = Inputs.toggle({label: "Näytä p-arvo", value: false})
+```
+
+```{ojs}
+//| echo: false
+show_p
+  ? html`<p style="margin-top:0.3em;font-size:0.95em;"><strong>${chi_p_text}</strong></p>`
+  : html``
+```
+
+## Keskiarvojen vertailu
+
+::::: columns
+::: {.column width="40%"}
+-   Normaalisti keskiarvoa esiintyy eniten
+-   Mitä poikkeavampi, sitä epätodennäköisempi
+-   "Normaalijakauma"
+-   Yksinkertaista laskea kuinka todennäköisiä erisuuruiset poikkeamat
+-   t-testi
+:::
+
+::: {.column width="60%"}
+![](images/normaalijakauma.webp)
+:::
+:::::
+
+## Jos aineisto ei ole normaalisti jakautunut
+
+::::: columns
+::: {.column width="70%"}
+-   Todennäköisyydet pääteltävä itse aineistosta
+-   Monimutkaisempi testi (tietokoneelle)
+-   Tarvitaan isompi aineisto
+-   Suurempi p-arvo samalla aineistolla
+:::
+
+::: {.column width="30%"}
+![](images/einormaalijakauma-01.webp)
+:::
+:::::
+
+## **Tehtävä:**
+
+1.  Valitse oikea tilastollinen testi sen mukaan mitä vertasit
+
+2.  Kirjaa käytetty testi ja verrattavat suureet posterin menetelmiin
+
+3.  Kirjaa molempien ryhmien verrattavat tulokset ja p-arvot posterin tuloksiin.
+
+4.  Lisää vielä tulosten alkuun tutkimusjoukon kuvailu
+
+    1.  Havaintojen lukumäärä yhteensä
+
+    2.  Sukupuolijakauma
+
+    3.  Muu kysymyksen kannalta olennainen kuvailu
+
+    4.  Kuinka paljon tutkitusta asiasta oli havaintoja
+
+![](ed_flow_qrcode.png){fig-align="right"}
+
+------------------------------------------------------------------------
+
+![](images/testin_valinta-01.png)
+
+------------------------------------------------------------------------
+
+![](kummusniemi_kartta.jpg)

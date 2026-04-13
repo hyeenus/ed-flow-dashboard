@@ -1,0 +1,19 @@
+/* Compact OJS controls */
+.reveal .cell > .cell-output-display { margin: 0.1em 0 !important; }
+.reveal form { margin: 0 0 0.15em 0 !important; font-size: 0.78em; line-height: 1.4; }
+.reveal form label { padding: 0 3px; }
+.reveal form input[type="range"] { width: 150px; }
+.reveal form input[type="number"] { width: 50px; font-size: 0.82em; padding: 1px 4px; }
+.reveal form select { font-size: 0.85em; padding: 1px 4px; }
+/* Toggle checkbox tighter */
+.reveal form input[type="checkbox"] { margin: 0 4px 0 0; }
+/* SVG responsive */
+.reveal svg { max-width: 100%; height: auto; }
+/* Tighter slide content */
+.reveal .slide-content { padding-top: 0.2em; }
+/* Figure caption styling */
+.reveal .fig-caption { font-size: 0.7em; color: #666; margin-top: 0.2em; font-style: italic; }
+/* Mobile */
+@media (max-width: 768px) {
+  .reveal .slides section { font-size: 0.65em; }
+}
