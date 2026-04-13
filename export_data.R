@@ -92,22 +92,27 @@ out <- ed |>
     siviilisaaty = case_match(
       as.character(maritalstatus),
       "Single"               ~ "Naimaton",
-      "Married/Life Partner" ~ "Naimisissa",
+      "Married"              ~ "Naimisissa",
+      "Life Partner"         ~ "Naimisissa",
+      "Civil Union"          ~ "Naimisissa",
+      "Significant Other"    ~ "Naimisissa",
       "Divorced"             ~ "Eronnut",
+      "Legally Separated"    ~ "Eronnut",
       "Widowed"              ~ "Leski",
       .default                = "Muu/Tuntematon"
     ),
 
     tyollisyys = case_match(
       as.character(employstatus),
+      "Full Time"            ~ "Työssä",
+      "Part Time"            ~ "Työssä",
+      "Self Employed"        ~ "Työssä",
       "Not Employed"         ~ "Työtön",
-      "Full Time"            ~ "Kokopäivätyö",
       "Retired"              ~ "Eläkeläinen",
       "Disabled"             ~ "Työkyvytön",
-      "Part Time"            ~ "Osa-aikatyö",
       "Student - Full Time"  ~ "Opiskelija",
       "Student - Part Time"  ~ "Opiskelija",
-      "Self Employed"        ~ "Yrittäjä",
+      "On Active Military Duty" ~ "Työssä",
       .default                = "Muu/Tuntematon"
     ),
 
@@ -121,6 +126,9 @@ out <- ed |>
       "Walk-in"               ~ "Kävellen",
       "Police"                ~ "Poliisi",
       "Public Transportation" ~ "Julkinen liikenne",
+      "Wheelchair"            ~ "Muu",
+      "Other"                 ~ "Muu",
+      NA_character_            ~ "Muu",
       .default                 = "Muu"
     ),
 

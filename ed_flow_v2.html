@@ -282,6 +282,65 @@ body{
 .chart-legend{display:flex;gap:14px;align-items:center;padding:6px 0;flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted)}
 .legend-swatch{width:12px;height:12px;border-radius:3px}
+
+/* ══════════ COPY/DOWNLOAD BUTTONS ══════════ */
+.cc-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.cc-action-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;padding:0;line-height:1}
+.cc-action-btn:hover{background:var(--primary-light);border-color:var(--primary)}
+.cc-action-btn.copied{background:var(--success-light);border-color:var(--success)}
+
+/* ══════════ DECISION TREE (Paattelypuu) ══════════ */
+.dt-selectors{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.dt-selectors .dt-sel-group{flex:1;min-width:220px}
+.dt-selectors label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);font-weight:600;margin-bottom:4px}
+.dt-selectors select{width:100%;padding:8px 12px;border:1px solid var(--border-strong);border-radius:7px;font-size:12.5px;font-family:var(--font-body)}
+.dt-result{margin-top:16px}
+.dt-explanation{background:var(--primary-light);border:1px solid var(--primary);border-radius:var(--r);padding:14px 18px;font-size:13px;line-height:1.6}
+.dt-explanation strong{color:var(--primary)}
+.dt-test-name{font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--primary);margin-bottom:6px}
+
+/* Interactive tree grid */
+.dt-tree-wrap{position:relative;padding:8px 4px 12px}
+.dt-tree-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.dt-tree{display:grid;grid-template-columns:auto auto auto auto auto;column-gap:20px;row-gap:8px;align-items:center;justify-items:stretch;position:relative;width:100%;padding:0;z-index:2}
+.dt-node{background:#fff;border:2px solid var(--border);border-radius:10px;padding:8px 12px;cursor:default;transition:all .2s;text-align:center;box-shadow:var(--sh-sm);position:relative;min-width:120px;max-width:200px;z-index:2}
+.dt-node .dt-node-lbl{font-family:var(--font-display);font-size:13px;font-weight:600;line-height:1.2;color:var(--text)}
+.dt-node .dt-node-ex{font-size:9.5px;color:var(--text-muted);margin-top:2px;line-height:1.2}
+.dt-node.dt-root{background:linear-gradient(135deg,var(--primary),#2563EB);border-color:var(--primary);color:#fff}
+.dt-node.dt-root .dt-node-lbl{color:#fff}
+.dt-node.dt-root .dt-node-ex{color:rgba(255,255,255,.8)}
+.dt-node.dt-active{border-color:var(--accent);cursor:pointer;background:#fff}
+.dt-node.dt-active .dt-node-lbl{color:var(--accent-dark)}
+.dt-node.dt-active:hover{border-color:var(--accent);background:var(--accent-light);box-shadow:var(--sh);transform:translateY(-1px)}
+.dt-node.dt-clicked{box-shadow:0 0 0 3px var(--primary-light),var(--sh-sm);border-color:var(--primary);background:var(--primary-lighter)}
+.dt-node.dt-clicked .dt-node-lbl{color:var(--primary)}
+.dt-node.dt-dimmed{opacity:0.25;pointer-events:none;filter:grayscale(0.5)}
+.dt-node.dt-dimmed:hover{transform:none}
+.dt-node.dt-leaf{min-width:130px;border-width:2px}
+.dt-node.dt-leaf.dt-chi{background:linear-gradient(135deg,#EDE9FE,#F5F3FF);border-color:var(--purple)}
+.dt-node.dt-leaf.dt-t{background:linear-gradient(135deg,#D1FAE5,#ECFDF5);border-color:var(--success)}
+.dt-node.dt-leaf.dt-mwu{background:linear-gradient(135deg,#DBEAFE,#EFF6FF);border-color:#3B82F6}
+.dt-node.dt-leaf.dt-anova{background:linear-gradient(135deg,#FEF3C7,#FFFBEB);border-color:var(--warning)}
+.dt-node.dt-leaf.dt-kw{background:linear-gradient(135deg,#FEE2E2,#FEF2F2);border-color:var(--error)}
+.dt-node.dt-leaf.dt-pearson{background:linear-gradient(135deg,#FCE7F3,#FDF2F8);border-color:#EC4899}
+.dt-node.dt-wrong{animation:dtWrongShake .4s ease;border-color:var(--error)!important;box-shadow:0 0 0 3px rgba(220,38,38,.35)!important}
+@keyframes dtWrongShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.dt-feedback{font-size:12.5px;line-height:1.5;padding:10px 14px;border-radius:8px;margin-top:10px;border-left:3px solid}
+.dt-feedback.dt-fb-hint{background:var(--bg-warm);border-color:var(--border-strong);color:var(--text-muted)}
+.dt-feedback.dt-fb-ok{background:var(--success-light);border-color:var(--success);color:#065F46}
+.dt-feedback.dt-fb-err{background:var(--error-light);border-color:var(--error);color:#991B1B}
+
+/* ══════════ RULE MODEL TOGGLE ══════════ */
+.rule-direction-toggle{margin-bottom:12px;padding:10px 14px;background:var(--bg-warm);border:1px solid var(--border);border-radius:var(--r-sm)}
+.rule-direction-toggle label{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12.5px;cursor:pointer;font-weight:500}
+.rule-direction-toggle label input{accent-color:var(--primary)}
+.rule-metrics{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px}
+.rule-metric-card{padding:10px 14px;border-radius:var(--r-sm);border:1px solid var(--border);background:#fff}
+.rule-metric-card .rm-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);font-weight:600;margin-bottom:2px}
+.rule-metric-card .rm-val{font-size:15px;font-family:var(--font-mono);font-weight:600}
+.rule-metric-card.rm-before{border-left:3px solid var(--warning)}
+.rule-metric-card.rm-after{border-left:3px solid var(--accent)}
+.rule-metric-card.rm-improve{border-left:3px solid var(--success)}
 </style>
 </head>
 <body>
@@ -415,7 +474,7 @@ body{
       </div>
       <div class="nav-item" data-tab="imaging" onclick="showTab('imaging')">
         <div class="nav-icon">📷</div>
-        <div><div class="nav-label">Kuvantaminen</div></div>
+        <div><div class="nav-label">Konetutkimukset</div></div>
       </div>
       <div class="nav-item" data-tab="labs" onclick="showTab('labs')">
         <div class="nav-icon">🧪</div>
@@ -440,6 +499,10 @@ body{
       <div class="nav-item" data-tab="rule-model" onclick="showTab('rule-model')">
         <div class="nav-icon">🔧</div>
         <div><div class="nav-label">Oma sääntöpohjainen malli</div></div>
+      </div>
+      <div class="nav-item" data-tab="decision-tree" onclick="showTab('decision-tree')">
+        <div class="nav-icon">🌳</div>
+        <div><div class="nav-label">Päättelypuu</div></div>
       </div>
     </div>
   </div>
@@ -482,6 +545,7 @@ body{
     <div class="tab-panel" id="panel-meds"></div>
     <div class="tab-panel" id="panel-summary-table"></div>
     <div class="tab-panel" id="panel-rule-model"></div>
+    <div class="tab-panel" id="panel-decision-tree"></div>
   </div>
 </main>
 
@@ -498,7 +562,7 @@ const GROUP_LABELS = {
   laboratorio: "Laboratorio",
   historia: "Historia",
   tulosyyt: "Tulosyyt",
-  kuvantaminen: "Kuvantaminen",
+  kuvantaminen: "Konetutkimukset",
   laakitys: "Lääkitys"
 };
 
@@ -511,11 +575,11 @@ const VARS = {
   esi: {label:"ESI-luokka", type:"ordinal", group:"kaynti", levels:["1","2","3","4","5"]},
   saapumistapa: {label:"Saapumistapa", type:"cat", group:"kaynti", levels:["Auto","Ambulanssi","Kävellen","Poliisi","Julkinen liikenne","Muu"]},
   viikonpaiva: {label:"Viikonpäivä", type:"cat", group:"kaynti", levels:["Ma","Ti","Ke","To","Pe","La","Su"]},
-  kellonaika: {label:"Kellonaika", type:"cat", group:"kaynti", levels:["00-03","03-07","07-10","10-14","14-17","17-20","20-00"]},
+  kellonaika: {label:"Kellonaika", type:"cat", group:"kaynti", levels:["07-10","11-14","15-18","19-22","23-02","03-06"]},
   kuukausi: {label:"Kuukausi", type:"cat", group:"kaynti", levels:["Tammi","Helmi","Maalis","Huhti","Touko","Kesä","Heinä","Elo","Syys","Loka","Marras","Joulu"]},
   aiemmat_kaynti: {label:"Aiemmat päivystyskäynnit", type:"cont", group:"historia"},
   aiemmat_osasto: {label:"Aiemmat osastojaksot", type:"cont", group:"historia"},
-  edellinen_lopputulos: {label:"Edellinen lopputulos", type:"cat", group:"historia", levels:["Kotiutunut","Osastolle","Ei aiempaa"]},
+  edellinen_lopputulos: {label:"Edellinen lopputulos", type:"cat", group:"historia", levels:["Ei aiempia","Kotiutunut","Osastolle","Muu","Omalla vastuulla","Poistunut"]},
   // Triage vitals
   tr_syke: {label:"Syke (triage)", type:"cont", group:"vitaalit_triage"},
   tr_sys: {label:"Syst. RR (triage)", type:"cont", group:"vitaalit_triage"},
@@ -722,9 +786,13 @@ function renderCurrentTab() {
     'labs': buildLabs,
     'meds': buildMeds,
     'summary-table': buildSummaryTable,
-    'rule-model': buildRuleModel
+    'rule-model': buildRuleModel,
+    'decision-tree': buildDecisionTree
   };
-  if (builders[activeTab]) builders[activeTab]();
+  if (builders[activeTab]) {
+    builders[activeTab]();
+    setTimeout(injectActions, 80);
+  }
 }
 
 // Accordion toggles
@@ -874,6 +942,248 @@ function autoTest(varKey, data) {
     if(sk > 1) return mannWhitneyU(g1,g2);
     return welchTTest(g1,g2);
   }
+}
+
+// ═══════════════════════════════════════════════════════
+// COPY / DOWNLOAD UTILITIES
+// ═══════════════════════════════════════════════════════
+function svgToPng(svgEl, callback) {
+  const clone = svgEl.cloneNode(true);
+  // Inline computed styles for correct rendering
+  const svgW = svgEl.getAttribute('viewBox')?.split(' ') || [0,0,600,400];
+  const origW = parseFloat(svgW[2]) || 600;
+  const origH = parseFloat(svgW[3]) || 400;
+  clone.setAttribute('width', origW);
+  clone.setAttribute('height', origH);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  // Add font definitions inline
+  const style = document.createElementNS('http://www.w3.org/2000/svg','style');
+  style.textContent = `text,tspan{font-family:Inter,system-ui,sans-serif;fill:#0F172A}`;
+  clone.insertBefore(style, clone.firstChild);
+  const svgData = new XMLSerializer().serializeToString(clone);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  const svgBlob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(svgBlob);
+  img.onload = () => {
+    canvas.width = origW * 2;
+    canvas.height = origH * 2;
+    ctx.scale(2, 2);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, origW, origH);
+    ctx.drawImage(img, 0, 0, origW, origH);
+    canvas.toBlob(blob => { callback(blob); URL.revokeObjectURL(url); }, 'image/png');
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); };
+  img.src = url;
+}
+
+function copyChartAsPng(btn) {
+  const card = btn.closest('.chart-card');
+  const svgEl = card.querySelector('svg');
+  if (!svgEl) return;
+  svgToPng(svgEl, blob => {
+    if (!blob) return;
+    navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(() => {
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 1200);
+    }).catch(() => {});
+  });
+}
+
+function downloadChartAsPng(btn, filename) {
+  const card = btn.closest('.chart-card');
+  const svgEl = card.querySelector('svg');
+  if (!svgEl) return;
+  svgToPng(svgEl, blob => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = (filename || 'kaavio') + '.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+}
+
+function tableToTsv(tableEl) {
+  if (!tableEl) return '';
+  const rows = [...tableEl.querySelectorAll('tr')];
+  return rows.map(r => {
+    const cells = [...r.querySelectorAll('th,td')];
+    return cells.map(c => c.textContent.replace(/\s+/g,' ').trim()).join('\t');
+  }).join('\n');
+}
+
+function copyTableAsTsv(btn) {
+  const card = btn.closest('.chart-card') || btn.closest('.cc-footer')?.parentElement;
+  const tableEl = (card || btn.parentElement).querySelector('table');
+  if (!tableEl) return;
+  const tsv = tableToTsv(tableEl);
+  navigator.clipboard.writeText(tsv).then(() => {
+    btn.classList.add('copied');
+    setTimeout(() => btn.classList.remove('copied'), 1200);
+  }).catch(() => {});
+}
+
+async function copyTableAsHtml(btn) {
+  const card = btn.closest('.chart-card') || btn.closest('.cc-footer')?.parentElement || btn.parentElement?.parentElement;
+  const tableEl = (card || btn.parentElement).querySelector('table');
+  if (!tableEl) return;
+  const html = tableEl.outerHTML;
+  const tsv = tableToTsv(tableEl);
+  try {
+    const htmlBlob = new Blob([html], {type: 'text/html'});
+    const textBlob = new Blob([tsv], {type: 'text/plain'});
+    await navigator.clipboard.write([
+      new ClipboardItem({'text/html': htmlBlob, 'text/plain': textBlob})
+    ]);
+    btn.classList.add('copied');
+    setTimeout(() => btn.classList.remove('copied'), 1200);
+  } catch(e) {
+    // Fallback to TSV
+    navigator.clipboard.writeText(tsv).then(() => {
+      btn.classList.add('copied');
+      setTimeout(() => btn.classList.remove('copied'), 1200);
+    }).catch(() => {});
+  }
+}
+
+async function copyTableAsImage(btn) {
+  const card = btn.closest('.chart-card') || btn.closest('.cc-footer')?.parentElement || btn.parentElement?.parentElement;
+  const tableEl = (card || btn.parentElement).querySelector('table');
+  if (!tableEl) return;
+  // Render table to canvas via a temporary positioned div
+  const clone = tableEl.cloneNode(true);
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;top:-9999px;left:-9999px;background:#fff;padding:12px;font-family:Inter,system-ui,sans-serif;font-size:12px;';
+  wrap.appendChild(clone);
+  document.body.appendChild(wrap);
+  // Style the clone table for rendering
+  clone.style.cssText = 'border-collapse:collapse;font-family:Inter,system-ui,sans-serif;font-size:12px;';
+  clone.querySelectorAll('th,td').forEach(cell => {
+    cell.style.cssText = 'border:1px solid #CBD5E1;padding:6px 10px;text-align:left;white-space:nowrap;';
+  });
+  clone.querySelectorAll('th').forEach(cell => {
+    cell.style.background = '#F1F5F9';
+    cell.style.fontWeight = '600';
+  });
+  try {
+    // Use html2canvas-like approach with SVG foreignObject
+    const rect = wrap.getBoundingClientRect();
+    const w = Math.ceil(rect.width);
+    const h = Math.ceil(rect.height);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w*2}" height="${h*2}">
+      <foreignObject width="${w}" height="${h}" transform="scale(2)">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Inter,system-ui,sans-serif;font-size:12px;background:#fff;padding:12px">${clone.outerHTML}</div>
+      </foreignObject>
+    </svg>`;
+    const svgBlob = new Blob([svg], {type:'image/svg+xml;charset=utf-8'});
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = w * 2;
+      canvas.height = h * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(async blob => {
+        if (blob) {
+          try {
+            await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+            btn.classList.add('copied');
+            setTimeout(() => btn.classList.remove('copied'), 1200);
+          } catch(e) {}
+        }
+      }, 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); };
+    img.src = url;
+  } finally {
+    document.body.removeChild(wrap);
+  }
+}
+
+function downloadTableAsCsv(btn, filename) {
+  const card = btn.closest('.chart-card') || btn.closest('.cc-footer')?.parentElement;
+  const tableEl = (card || btn.parentElement).querySelector('table');
+  if (!tableEl) return;
+  const rows = [...tableEl.querySelectorAll('tr')];
+  const csv = rows.map(r => {
+    const cells = [...r.querySelectorAll('th,td')];
+    return cells.map(c => '"' + c.textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""') + '"').join(';');
+  }).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = (filename || 'taulukko') + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function addChartActions(headerEl, chartName) {
+  if (!headerEl || headerEl.querySelector('.cc-actions')) return;
+  const div = document.createElement('div');
+  div.className = 'cc-actions';
+  div.innerHTML = `<button class="cc-action-btn" onclick="copyChartAsPng(this)" title="Kopioi kuva leikepöydälle">&#x1F4CB;</button><button class="cc-action-btn" onclick="downloadChartAsPng(this,'${chartName||'kaavio'}')" title="Lataa kuva PNG-tiedostona">&#x1F4BE;</button>`;
+  headerEl.appendChild(div);
+}
+
+function addTableActions(containerEl, tableName) {
+  if (!containerEl) return;
+  // Check if already added
+  if (containerEl.querySelector('.cc-actions')) return;
+  const div = document.createElement('div');
+  div.className = 'cc-actions';
+  div.style.cssText = 'display:inline-flex;margin-bottom:6px;';
+  div.innerHTML = `<button class="cc-action-btn" onclick="copyTableAsTsv(this)" title="Kopioi taulukko leikepöydälle (TSV)">&#x1F4CB;</button><button class="cc-action-btn" onclick="downloadTableAsCsv(this,'${tableName||'taulukko'}')" title="Lataa taulukko CSV-tiedostona">&#x1F4BE;</button>`;
+  containerEl.insertBefore(div, containerEl.firstChild);
+}
+
+// Inject copy/download buttons into chart cards after rendering
+function injectActions() {
+  document.querySelectorAll('.chart-card').forEach(card => {
+    // SVG chart actions: find or create a header area for buttons
+    if (card.querySelector('svg') && !card.querySelector('.cc-chart-actions')) {
+      const name = card.querySelector('.cc-title')?.textContent || 'kaavio';
+      const header = card.querySelector('.cc-header');
+      const controls = card.querySelector('.cc-controls');
+      const target = header || controls;
+      if (target) {
+        const div = document.createElement('div');
+        div.className = 'cc-actions cc-chart-actions';
+        div.innerHTML = `<button class="cc-action-btn" onclick="copyChartAsPng(this)" title="Kopioi kuva leikepöydälle">&#x1F4CB;</button><button class="cc-action-btn" onclick="downloadChartAsPng(this,'${name||'kaavio'}')" title="Lataa kuva PNG-tiedostona">&#x1F4BE;</button>`;
+        target.style.display = 'flex';
+        target.style.justifyContent = 'space-between';
+        target.style.alignItems = 'center';
+        target.appendChild(div);
+      }
+    }
+    // Table actions in cc-footer
+    const footer = card.querySelector('.cc-footer');
+    if (footer && footer.querySelector('table') && !footer.querySelector('.cc-table-actions')) {
+      const name = card.querySelector('.cc-title')?.textContent || 'taulukko';
+      const div = document.createElement('div');
+      div.className = 'cc-actions cc-table-actions';
+      div.style.cssText = 'display:inline-flex;margin-bottom:6px;gap:4px;';
+      div.innerHTML = `<button class="cc-action-btn" onclick="copyTableAsHtml(this)" title="Kopioi taulukko leikepöydälle">&#x1F4CB;</button><button class="cc-action-btn" onclick="copyTableAsImage(this)" title="Kopioi taulukko kuvana">&#x1F4F7;</button><button class="cc-action-btn" onclick="downloadTableAsCsv(this,'${name||'taulukko'}')" title="Lataa taulukko CSV-tiedostona">&#x1F4BE;</button>`;
+      footer.insertBefore(div, footer.firstChild);
+    }
+  });
+  // Standalone tables
+  document.querySelectorAll('.split-right table, #sumtable-output table').forEach(tbl => {
+    const parent = tbl.parentElement;
+    if (parent && !parent.querySelector('.cc-table-actions')) {
+      const div = document.createElement('div');
+      div.className = 'cc-actions cc-table-actions';
+      div.style.cssText = 'display:inline-flex;margin-bottom:6px;gap:4px;';
+      div.innerHTML = `<button class="cc-action-btn" onclick="copyTableAsHtml(this)" title="Kopioi taulukko leikepöydälle">&#x1F4CB;</button><button class="cc-action-btn" onclick="copyTableAsImage(this)" title="Kopioi taulukko kuvana">&#x1F4F7;</button><button class="cc-action-btn" onclick="downloadTableAsCsv(this,'taulukko')" title="Lataa taulukko CSV-tiedostona">&#x1F4BE;</button>`;
+      parent.insertBefore(div, tbl);
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1030,8 +1340,11 @@ function drawBoxplot(containerId, data, contVar, groupVar, groups) {
     const cy = y(grp) + y.bandwidth()/2;
     const bh = y.bandwidth() * 0.7;
 
-    // Whisker line
-    g.append('line').attr('x1',x(wLo)).attr('x2',x(wHi)).attr('y1',cy).attr('y2',cy)
+    // Left whisker line: wLo cap → Q1 (left edge of box)
+    g.append('line').attr('x1',x(wLo)).attr('x2',x(q1)).attr('y1',cy).attr('y2',cy)
+      .attr('stroke',color).attr('stroke-width',1.5);
+    // Right whisker line: Q3 (right edge of box) → wHi cap
+    g.append('line').attr('x1',x(q3)).attr('x2',x(wHi)).attr('y1',cy).attr('y2',cy)
       .attr('stroke',color).attr('stroke-width',1.5);
     // Whisker caps
     g.append('line').attr('x1',x(wLo)).attr('x2',x(wLo)).attr('y1',cy-bh/4).attr('y2',cy+bh/4)
@@ -1120,7 +1433,8 @@ function drawHistogram(containerId, data, contVar, groupVar, groups) {
 // ═══════════════════════════════════════════════════════
 function buildCrossTab(data, catVar, levels) {
   const dispoLevels = ['Kotiutunut','Osastolle'];
-  let html = '<table class="ctable"><thead><tr><th rowspan="2">' + (VARS[catVar]?.label || catVar) + '</th>';
+  const catLabel = catVar === '_prevBin' ? 'Aiempien käyntien lukumäärä' : (VARS[catVar]?.label || catVar);
+  let html = '<table class="ctable"><thead><tr><th rowspan="2">' + catLabel + '</th>';
   html += '<th colspan="3">Hoidon lopputulos</th></tr><tr>';
   dispoLevels.forEach(d => html += '<th>'+d+'</th>');
   html += '<th class="total">Yhteensä</th></tr></thead><tbody>';
@@ -1501,7 +1815,10 @@ function renderPrevVisits() {
   const sub = document.querySelector('#toggle-prev-sub .tog-btn.active')?.dataset.sub || 'kaynti';
 
   if (sub === 'edellinen') {
-    const levels = VARS.edellinen_lopputulos.levels;
+    const allLevels = VARS.edellinen_lopputulos.levels;
+    // Only show levels that actually appear in the data
+    const presentLevels = allLevels.filter(l => FILTERED.some(d => d.edellinen_lopputulos === l));
+    const levels = presentLevels.length > 0 ? presentLevels : allLevels;
     drawStackedBar('chart-prev', FILTERED, 'edellinen_lopputulos', 'dispo', mode, levels, ['Kotiutunut','Osastolle']);
     document.getElementById('table-prev').innerHTML = buildCrossTab(FILTERED, 'edellinen_lopputulos', levels);
   } else {
@@ -1625,13 +1942,13 @@ function buildImaging() {
   panel.innerHTML = `
     <div class="panel-header">
       <div class="panel-eyebrow">Kliiniset tiedot</div>
-      <div class="panel-title">Kuvantaminen</div>
+      <div class="panel-title">Konetutkimukset</div>
     </div>
     <div class="chart-card">
       <div class="cc-controls" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
         <div class="multi-select-wrap" id="imaging-select-wrap">
           <div class="multi-select-btn" onclick="toggleMultiDrop('imaging-dropdown')">
-            <span>Valitse kuvantaminen</span> <span class="multi-select-count" id="imaging-count">${defaultSelected.length}</span>
+            <span>Valitse konetutkimus</span> <span class="multi-select-count" id="imaging-count">${defaultSelected.length}</span>
           </div>
           <div class="multi-select-dropdown" id="imaging-dropdown">
             ${freqs.map(f => `<label><input type="checkbox" value="${f.key}" ${defaultSelected.includes(f.key)?'checked':''} onchange="renderImaging()"> ${VARS[f.key].label} (${f.count})</label>`).join('')}
@@ -1655,7 +1972,7 @@ function renderImaging() {
   const mode = document.querySelector('#toggle-imaging .tog-btn.active')?.dataset.mode || 'count';
   if (selected.length === 0) {
     clearChart('chart-imaging');
-    document.getElementById('table-imaging').innerHTML = '<div class="alert alert-info">Valitse vähintään yksi kuvantamismuoto.</div>';
+    document.getElementById('table-imaging').innerHTML = '<div class="alert alert-info">Valitse vähintään yksi konetutkimus.</div>';
     return;
   }
 
@@ -1669,7 +1986,7 @@ function renderImaging() {
   drawStackedBar('chart-imaging', chartData, '_img', 'dispo', mode, labels, ['Kotiutunut','Osastolle']);
 
   let html = '<div class="alert alert-info" style="margin-bottom:8px"><strong>Huom:</strong> Nimittäjänä ovat potilaat, joille kyseinen tutkimus on tehty.</div>';
-  html += '<table class="ctable"><thead><tr><th>Kuvantaminen</th><th>Kotiutunut</th><th>Osastolle</th><th class="total">Yhteensä</th></tr></thead><tbody>';
+  html += '<table class="ctable"><thead><tr><th>Konetutkimus</th><th>Kotiutunut</th><th>Osastolle</th><th class="total">Yhteensä</th></tr></thead><tbody>';
   selected.forEach(k => {
     const sub = FILTERED.filter(d => d[k]===1);
     const koti = sub.filter(d=>d.dispo==='Kotiutunut').length;
@@ -1897,6 +2214,8 @@ function renderSummaryTable() {
 }
 
 // ─── RULE-BASED MODEL ───
+let ruleDirection = 'osastolle'; // 'osastolle' | 'fasttrack' — default: ohjaa sairaalan päivystykseen
+
 function buildRuleModel() {
   const panel = document.getElementById('panel-rule-model');
 
@@ -1914,10 +2233,15 @@ function buildRuleModel() {
     <div class="panel-header">
       <div class="panel-eyebrow">Analyysit</div>
       <div class="panel-title">Fast Track -ohjaussääntö</div>
-      <div class="panel-desc">Luo sääntö, jolla ennustetaan mitkä potilaat todennäköisesti otetaan osastohoitoon ja ohjataan siksi suoraan keskussairaalaan.</div>
+      <div class="panel-desc">Luo sääntö, jolla tunnistetaan potilaat ja ohjataan heitä oikeaan hoitopaikkaan.</div>
     </div>
     <div class="split-panel">
       <div class="split-left" id="rule-builder-panel">
+        <div class="rule-direction-toggle">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);font-weight:600;margin-bottom:6px">Säännön suunta</div>
+          <label><input type="radio" name="rule-dir" value="osastolle" checked onchange="ruleDirection='osastolle';renderRuleResults()"> Ohjaa sairaalan päivystykseen <span style="color:var(--text-dim);font-size:11px">(sääntö tunnistaa osastopotilaat)</span></label>
+          <label><input type="radio" name="rule-dir" value="fasttrack" onchange="ruleDirection='fasttrack';renderRuleResults()"> Ohjaa Fast Trackille <span style="color:var(--text-dim);font-size:11px">(sääntö tunnistaa kotiutettavat)</span></label>
+        </div>
         <div class="section-title">Sääntöjen rakentaja</div>
         <div class="rule-builder">
           <div class="rule-row">
@@ -1957,6 +2281,7 @@ function buildRuleModel() {
         </ul>
       </div>
       <div class="split-right" id="rule-results">
+        <div class="rule-metrics" id="rule-metrics"></div>
         <div class="stat-row" id="rule-stats" style="margin-bottom:14px"></div>
         <div class="chart-card"><div class="cc-header"><div class="cc-header-text"><div class="cc-title">Vertailu</div></div></div>
           <div class="cc-body"><div class="cc-chart" id="chart-rule"></div></div>
@@ -2065,37 +2390,103 @@ function applyRulesToData(data) {
 
 function renderRuleResults() {
   const matched = applyRulesToData(FILTERED);
+  const nonMatched = FILTERED.filter(d => !matched.includes(d));
   const N = FILTERED.length;
   const n = matched.length;
-  const baseOsasto = N > 0 ? 100*FILTERED.filter(d=>d.dispo==='Osastolle').length/N : 0;
-  const matchedOsasto = n > 0 ? 100*matched.filter(d=>d.dispo==='Osastolle').length/n : 0;
-  const improvement = matchedOsasto - baseOsasto;
-
-  document.getElementById('rule-stats').innerHTML = `
-    <div class="stat-box"><div class="stat-lbl">Sääntöön sopivat</div><div class="stat-val">${n}</div><div class="stat-sub">${N>0?fmtNum(100*n/N,1):'0'} % kaikista</div></div>
-    <div class="stat-box stat-teal"><div class="stat-lbl">Osastohoitoon (%)</div><div class="stat-val">${fmtNum(matchedOsasto,1)} %</div></div>
-    <div class="stat-box ${improvement>=0?'stat-green':'stat-red'}"><div class="stat-lbl">Parannus</div><div class="stat-val">${improvement>=0?'+':''}${fmtNum(improvement,1)} %-yks.</div></div>
-  `;
-
-  // Comparison bar chart
-  const compData = [
-    {_group:'Kaikki potilaat', dispo:'Kotiutunut'},
-    {_group:'Kaikki potilaat', dispo:'Osastolle'},
-    {_group:'Säännön mukaiset', dispo:'Kotiutunut'},
-    {_group:'Säännön mukaiset', dispo:'Osastolle'}
-  ];
-  // We need to build pseudo-data for the stacked bar
+  const nNon = nonMatched.length;
   const allOsasto = FILTERED.filter(d=>d.dispo==='Osastolle').length;
   const allKoti = FILTERED.filter(d=>d.dispo==='Kotiutunut').length;
   const mOsasto = matched.filter(d=>d.dispo==='Osastolle').length;
   const mKoti = matched.filter(d=>d.dispo==='Kotiutunut').length;
+  const nmOsasto = nonMatched.filter(d=>d.dispo==='Osastolle').length;
+  const nmKoti = nonMatched.filter(d=>d.dispo==='Kotiutunut').length;
 
-  // Build a simple comparison chart manually
+  // ─── Better before/after metrics ───
+  const dir = ruleDirection;
+  const hasRules = activeRules.length > 0;
+  let baseWrongPct, baseWrongN, baseWrongLabel;
+  let ruleWrongPct, ruleWrongN;
+
+  if (dir === 'osastolle') {
+    // Baseline: if all go to Fast Track, admission rate = those who need hospital are in wrong place
+    baseWrongPct = N > 0 ? 100 * allOsasto / N : 0;
+    baseWrongN = allOsasto;
+    baseWrongLabel = 'Satunnaisesti jaettuna (kaikki Fast Trackille)';
+    if (hasRules) {
+      // With rule: wrong = matched-but-discharged + non-matched-but-admitted
+      const wrongWithRule = mKoti + nmOsasto;
+      ruleWrongPct = N > 0 ? 100 * wrongWithRule / N : 0;
+      ruleWrongN = wrongWithRule;
+    }
+  } else {
+    // Baseline: if all go to hospital, discharge rate = those who could have gone home
+    baseWrongPct = N > 0 ? 100 * allKoti / N : 0;
+    baseWrongN = allKoti;
+    baseWrongLabel = 'Satunnaisesti jaettuna (kaikki osastolle)';
+    if (hasRules) {
+      // With rule: wrong = matched-but-admitted + non-matched-but-discharged
+      const wrongWithRule = mOsasto + nmKoti;
+      ruleWrongPct = N > 0 ? 100 * wrongWithRule / N : 0;
+      ruleWrongN = wrongWithRule;
+    }
+  }
+
+  let metricsHtml = `
+    <div class="rule-metric-card rm-before">
+      <div class="rm-label">${baseWrongLabel}</div>
+      <div class="rm-val">${fmtNum(baseWrongPct,1)} % potilaista ohjautuu väärään paikkaan</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${baseWrongN} potilasta / ${N}</div>
+    </div>`;
+
+  if (hasRules) {
+    const improvementPp = baseWrongPct - ruleWrongPct;
+    const improvementN = baseWrongN - ruleWrongN;
+    metricsHtml += `
+    <div class="rule-metric-card rm-after">
+      <div class="rm-label">Säännöllä</div>
+      <div class="rm-val">${fmtNum(ruleWrongPct,1)} % ohjautuu väärään paikkaan</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${ruleWrongN} potilasta / ${N}</div>
+    </div>
+    <div class="rule-metric-card rm-improve">
+      <div class="rm-label">Parannus</div>
+      <div class="rm-val" style="color:${improvementPp>=0?'var(--success)':'var(--error)'}">${improvementN} potilasta vähemmän väärässä paikassa (${improvementPp>=0?'+':''}${fmtNum(improvementPp,1)} prosenttiyksikköä)</div>
+    </div>`;
+  } else {
+    metricsHtml += `
+    <div class="rule-metric-card rm-after" style="border-left-color:var(--text-dim)">
+      <div class="rm-label">Säännöllä</div>
+      <div class="rm-val" style="color:var(--text-dim);font-size:13px">Lisää sääntö aloittaaksesi</div>
+    </div>`;
+  }
+
+  document.getElementById('rule-metrics').innerHTML = metricsHtml;
+
+  // Stat boxes
+  const matchedOsastoPct = n > 0 ? 100*mOsasto/n : 0;
+  const matchedKotiPct = n > 0 ? 100*mKoti/n : 0;
+
+  if (dir === 'osastolle') {
+    document.getElementById('rule-stats').innerHTML = `
+      <div class="stat-box"><div class="stat-lbl">Sääntöön sopivat (→ osasto)</div><div class="stat-val">${n}</div><div class="stat-sub">${N>0?fmtNum(100*n/N,1):'0'} % kaikista</div></div>
+      <div class="stat-box stat-teal"><div class="stat-lbl">Oikeasti osastolle</div><div class="stat-val">${fmtNum(matchedOsastoPct,1)} %</div><div class="stat-sub">${mOsasto} / ${n}</div></div>
+      <div class="stat-box stat-orange"><div class="stat-lbl">Väärä ohjaus (kotiutettava → osasto)</div><div class="stat-val">${fmtNum(matchedKotiPct,1)} %</div><div class="stat-sub">${mKoti} / ${n}</div></div>
+    `;
+  } else {
+    document.getElementById('rule-stats').innerHTML = `
+      <div class="stat-box"><div class="stat-lbl">Sääntöön sopivat (→ Fast Track)</div><div class="stat-val">${n}</div><div class="stat-sub">${N>0?fmtNum(100*n/N,1):'0'} % kaikista</div></div>
+      <div class="stat-box stat-teal"><div class="stat-lbl">Oikeasti kotiutunut</div><div class="stat-val">${fmtNum(matchedKotiPct,1)} %</div><div class="stat-sub">${mKoti} / ${n}</div></div>
+      <div class="stat-box stat-orange"><div class="stat-lbl">Väärä ohjaus (osasto-potilas → FT)</div><div class="stat-val">${fmtNum(matchedOsastoPct,1)} %</div><div class="stat-sub">${mOsasto} / ${n}</div></div>
+    `;
+  }
+
+  // Comparison bar chart
   clearChart('chart-rule');
   const cWidth = getContainerWidth('chart-rule');
   if (cWidth > 50) {
-    const cHeight = 200;
-    const cm = {top:15,right:20,bottom:40,left:140};
+    const dirLabel = dir === 'osastolle' ? 'Säännön muk. (→ osasto)' : 'Säännön muk. (→ Fast Track)';
+    const nonLabel = dir === 'osastolle' ? 'Loput (→ Fast Track)' : 'Loput (→ osasto)';
+    const cHeight = 240;
+    const cm = {top:15,right:20,bottom:40,left:180};
     const cw = cWidth-cm.left-cm.right;
     const ch = cHeight-cm.top-cm.bottom;
 
@@ -2104,25 +2495,23 @@ function renderRuleResults() {
       .attr('preserveAspectRatio','xMidYMid meet');
     const g = svg.append('g').attr('transform',`translate(${cm.left},${cm.top})`);
 
-    const groups = ['Kaikki potilaat','Säännön mukaiset'];
-    const y = d3.scaleBand().domain(groups).range([0,ch]).padding(0.3);
+    const groups = ['Kaikki potilaat', dirLabel, nonLabel];
+    const y = d3.scaleBand().domain(groups).range([0,ch]).padding(0.25);
     const x = d3.scaleLinear().domain([0,100]).range([0,cw]);
 
     g.append('g').attr('class','grid').call(d3.axisBottom(x).ticks(5).tickSize(ch).tickFormat(d=>d+'%'));
 
     const barData = [
       {group:'Kaikki potilaat', koti: N>0?100*allKoti/N:0, osas: N>0?100*allOsasto/N:0},
-      {group:'Säännön mukaiset', koti: n>0?100*mKoti/n:0, osas: n>0?100*mOsasto/n:0}
+      {group:dirLabel, koti: n>0?100*mKoti/n:0, osas: n>0?100*mOsasto/n:0},
+      {group:nonLabel, koti: nNon>0?100*nmKoti/nNon:0, osas: nNon>0?100*nmOsasto/nNon:0}
     ];
 
     barData.forEach(bd => {
-      // Kotiutunut bar
       g.append('rect').attr('x',0).attr('y',y(bd.group)).attr('width',x(bd.koti)).attr('height',y.bandwidth())
         .attr('fill',DISPO_COLORS['Kotiutunut']).attr('rx',2);
-      // Osastolle bar
       g.append('rect').attr('x',x(bd.koti)).attr('y',y(bd.group)).attr('width',x(bd.osas)).attr('height',y.bandwidth())
         .attr('fill',DISPO_COLORS['Osastolle']).attr('rx',2);
-      // Labels
       if (bd.koti > 8) {
         g.append('text').attr('x',x(bd.koti/2)).attr('y',y(bd.group)+y.bandwidth()/2+4)
           .attr('text-anchor','middle').attr('fill','#fff').attr('font-size','11px').attr('font-weight','600')
@@ -2143,16 +2532,16 @@ function renderRuleResults() {
   const allKotiPct = N>0?100*allKoti/N:0;
   const mOsastoPct = n>0?100*mOsasto/n:0;
   const mKotiPct = n>0?100*mKoti/n:0;
+  const nmOsastoPct = nNon>0?100*nmOsasto/nNon:0;
+  const nmKotiPct = nNon>0?100*nmKoti/nNon:0;
 
   document.getElementById('table-rule').innerHTML = `
     <table class="ctable">
-      <thead><tr><th></th><th>Kaikki</th><th>Sääntö</th><th>Osuus</th></tr></thead>
+      <thead><tr><th></th><th>Kaikki</th><th>Sääntö (n=${n})</th><th>Loput (n=${nNon})</th></tr></thead>
       <tbody>
-        <tr><th>Potilaita</th><td>${N}</td><td>${n}</td><td>${N>0?fmtNum(100*n/N,1):'0'} %</td></tr>
-        <tr><th>Osastolle</th><td>${allOsasto}</td><td>${mOsasto}</td><td>${allOsasto>0?fmtNum(100*mOsasto/allOsasto,1):'0'} %</td></tr>
-        <tr><th>Osastolle-%</th><td>${fmtNum(allOsastoPct,1)} %</td><td>${fmtNum(mOsastoPct,1)} %</td><td>${improvement>=0?'+':''}${fmtNum(improvement,1)} %-yks.</td></tr>
-        <tr><th>Kotiutunut</th><td>${allKoti}</td><td>${mKoti}</td><td>${allKoti>0?fmtNum(100*mKoti/allKoti,1):'0'} %</td></tr>
-        <tr><th>Kotiutus-%</th><td>${fmtNum(allKotiPct,1)} %</td><td>${fmtNum(mKotiPct,1)} %</td><td>${(mKotiPct-allKotiPct)>=0?'+':''}${fmtNum(mKotiPct-allKotiPct,1)} %-yks.</td></tr>
+        <tr><th>Osastolle</th><td>${allOsasto} (${fmtNum(allOsastoPct,1)} %)</td><td>${mOsasto} (${fmtNum(mOsastoPct,1)} %)</td><td>${nmOsasto} (${fmtNum(nmOsastoPct,1)} %)</td></tr>
+        <tr><th>Kotiutunut</th><td>${allKoti} (${fmtNum(allKotiPct,1)} %)</td><td>${mKoti} (${fmtNum(mKotiPct,1)} %)</td><td>${nmKoti} (${fmtNum(nmKotiPct,1)} %)</td></tr>
+        <tr class="total-row"><th>Yhteensä</th><td>${N}</td><td>${n}</td><td>${nNon}</td></tr>
       </tbody>
     </table>
   `;
@@ -2184,12 +2573,462 @@ document.addEventListener('click', e => {
 });
 
 // ═══════════════════════════════════════════════════════
+// DECISION TREE (Paattelypuu) — Interactive clickable tree
+// ═══════════════════════════════════════════════════════
+
+// Tree node definitions
+const DT_NODES = {
+  root:    { lbl:'Mitä vertaillaan?', ex:'Valitse muuttujapari' },
+  osuudet: { lbl:'Osuuksia', ex:'Kategorinen vs kategorinen' },
+  keski:   { lbl:'Keskiarvoja', ex:'Jatkuva vastemuuttuja' },
+  korr:    { lbl:'Korrelaatio', ex:'Kaksi jatkuvaa muuttujaa' },
+  normaali2: { lbl:'Normaalijakauma', ex:'Vinous ≤ 1' },
+  einorm2:   { lbl:'Ei normaali', ex:'Vinous > 1' },
+  normaali3: { lbl:'Normaalijakauma', ex:'Vinous ≤ 1' },
+  einorm3:   { lbl:'Ei normaali', ex:'Vinous > 1' },
+  kaksi:   { lbl:'2 ryhmää', ex:'' },
+  useampi: { lbl:'3+ ryhmää', ex:'' },
+  chi:     { lbl:'χ²-testi', ex:'Khiin neliö' },
+  t:       { lbl:'t-testi', ex:'Welch' },
+  mwu:     { lbl:'Mann-Whitney U', ex:'Ei-parametrinen' },
+  anova:   { lbl:'ANOVA', ex:'Varianssianalyysi' },
+  kw:      { lbl:'Kruskal-Wallis', ex:'Ei-parametrinen' },
+  pearson: { lbl:'Pearson', ex:'Korrelaatiokerroin' }
+};
+
+// Tree hierarchy
+const DT_CHILDREN = {
+  root:    ['osuudet','keski','korr'],
+  osuudet: ['chi'],
+  keski:   ['kaksi','useampi'],
+  kaksi:   ['normaali2','einorm2'],
+  useampi: ['normaali3','einorm3'],
+  normaali2: ['t'],
+  einorm2:   ['mwu'],
+  normaali3: ['anova'],
+  einorm3:   ['kw'],
+  korr:    ['pearson']
+};
+const DT_PARENT = {};
+Object.entries(DT_CHILDREN).forEach(([p, cs]) => cs.forEach(c => DT_PARENT[c] = p));
+const DT_LEAF_IDS = new Set(['chi','t','mwu','anova','kw','pearson']);
+
+// Correct paths for each test
+const DT_TEST_TO_PATH = {
+  chi:     ['osuudet','chi'],
+  t:       ['keski','kaksi','normaali2','t'],
+  mwu:     ['keski','kaksi','einorm2','mwu'],
+  anova:   ['keski','useampi','normaali3','anova'],
+  kw:      ['keski','useampi','einorm3','kw'],
+  pearson: ['korr','pearson']
+};
+
+// State for interactive tree
+const dtState = {
+  xKey: null,
+  yKey: null,
+  correctTest: null,   // test id
+  correctPath: [],     // node ids in order
+  clickedPath: [],     // user's clicked nodes so far
+  msg: null,
+  done: false
+};
+
+function getVarType(varKey) {
+  const info = VARS[varKey];
+  if (!info) return 'unknown';
+  if (info.type === 'cont') return 'continuous';
+  return 'categorical';
+}
+
+function getGroupCount(varKey) {
+  const info = VARS[varKey];
+  if (!info) return 0;
+  if (info.type === 'binary') return 2;
+  if (info.levels) return info.levels.length;
+  return 2;
+}
+
+function checkNormality(varKey) {
+  const vals = FILTERED.map(d => d[varKey]).filter(v => v != null);
+  if (vals.length < 5) return {normal: true, skew: 0, n: vals.length};
+  const sk = Math.abs(skewness(vals));
+  return {normal: sk <= 1, skew: sk, n: vals.length};
+}
+
+// Determine correct test from X and Y variables
+function dtDetermineTest(xKey, yKey) {
+  const xType = getVarType(xKey);
+  const yType = getVarType(yKey);
+
+  if (xType === 'categorical' && yType === 'categorical') {
+    return 'chi';
+  } else if (xType === 'continuous' && yType === 'continuous') {
+    return 'pearson';
+  } else {
+    // One categorical, one continuous
+    const catKey = xType === 'categorical' ? xKey : yKey;
+    const contKey = xType === 'continuous' ? xKey : yKey;
+    const nGroups = getGroupCount(catKey);
+    const normCheck = checkNormality(contKey);
+    if (nGroups === 2) {
+      return normCheck.normal ? 't' : 'mwu';
+    } else {
+      return normCheck.normal ? 'anova' : 'kw';
+    }
+  }
+}
+
+function buildDecisionTree() {
+  const panel = document.getElementById('panel-decision-tree');
+
+  const varKeys = Object.keys(VARS).filter(k => k !== 'dispo');
+  const groupOrder = ['taustatiedot','kaynti','historia','vitaalit_triage','vitaalit_viim','laboratorio','kuvantaminen','tulosyyt','laakitys','lopputulos'];
+  const grouped = {};
+  varKeys.forEach(k => {
+    const grp = VARS[k].group;
+    if (!grouped[grp]) grouped[grp] = [];
+    grouped[grp].push(k);
+  });
+
+  let optionsHtml = '<option value="">-- Valitse --</option>';
+  groupOrder.forEach(grp => {
+    if (!grouped[grp]) return;
+    optionsHtml += `<optgroup label="${GROUP_LABELS[grp] || grp}">`;
+    grouped[grp].forEach(k => {
+      optionsHtml += `<option value="${k}">${VARS[k].label}</option>`;
+    });
+    optionsHtml += '</optgroup>';
+  });
+  optionsHtml += `<optgroup label="${GROUP_LABELS['lopputulos'] || 'Lopputulos'}"><option value="dispo">${VARS.dispo.label}</option></optgroup>`;
+
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-eyebrow">Analyysit</div>
+      <div class="panel-title">Päättelypuu</div>
+      <div class="panel-desc">Valitse kaksi muuttujaa ja klikkaa oikea polku päättelypuussa. Puu opastaa oikean tilastollisen testin valintaan.</div>
+    </div>
+    <div class="chart-card">
+      <div class="cc-header"><div class="cc-header-text"><div class="cc-title">Testin valinta</div></div></div>
+      <div class="cc-body">
+        <div class="dt-selectors">
+          <div class="dt-sel-group">
+            <label>Selittävä muuttuja (X)</label>
+            <select id="dt-x-var" onchange="dtUpdatePair()">${optionsHtml}</select>
+          </div>
+          <div class="dt-sel-group">
+            <label>Vastemuuttuja (Y)</label>
+            <select id="dt-y-var" onchange="dtUpdatePair()">${optionsHtml}</select>
+          </div>
+        </div>
+        <div id="dt-tree-container"></div>
+        <div id="dt-feedback"></div>
+        <div id="dt-result"></div>
+      </div>
+    </div>
+  `;
+  dtRenderTree();
+}
+
+function dtUpdatePair() {
+  const xKey = document.getElementById('dt-x-var').value;
+  const yKey = document.getElementById('dt-y-var').value;
+  dtState.xKey = xKey || null;
+  dtState.yKey = yKey || null;
+  dtState.clickedPath = [];
+  dtState.msg = null;
+  dtState.done = false;
+
+  if (xKey && yKey && xKey !== yKey) {
+    dtState.correctTest = dtDetermineTest(xKey, yKey);
+    dtState.correctPath = DT_TEST_TO_PATH[dtState.correctTest] || [];
+  } else {
+    dtState.correctTest = null;
+    dtState.correctPath = [];
+  }
+  dtRenderTree();
+}
+
+function dtNodeStateCls(id) {
+  const path = dtState.clickedPath;
+  if (id === 'root') return 'dt-root';
+  if (path.includes(id)) return 'dt-clicked';
+  // Active if parent is root or parent is on path
+  const parentId = DT_PARENT[id];
+  const parentOnPath = parentId === 'root' || path.includes(parentId);
+  if (parentOnPath && !path.includes(id)) return 'dt-active';
+  return 'dt-dimmed';
+}
+
+function dtNodeHtml(id, gridStyle) {
+  const n = DT_NODES[id];
+  if (!n) return '';
+  const isRoot = id === 'root';
+  const isLeaf = DT_LEAF_IDS.has(id);
+  const stateCls = dtNodeStateCls(id);
+  const leafCls = isLeaf ? ` dt-leaf dt-${id}` : '';
+  const clickable = !isRoot && stateCls === 'dt-active' && !dtState.done;
+  const click = clickable ? `onclick="dtClick('${id}')"` : '';
+  return `<div class="dt-node ${stateCls}${leafCls}" id="dt-n-${id}" style="${gridStyle}" ${click}>
+    <div class="dt-node-lbl">${n.lbl}</div>
+    ${n.ex ? '<div class="dt-node-ex">'+n.ex+'</div>' : ''}
+  </div>`;
+}
+
+function dtRenderTree() {
+  const container = document.getElementById('dt-tree-container');
+  const feedback = document.getElementById('dt-feedback');
+  const result = document.getElementById('dt-result');
+  if (!container) return;
+
+  // Build the tree grid
+  // Layout:
+  // Col 1: root (spans all rows)
+  // Col 2: osuudet, keski, korr
+  // Col 3: (empty for osuudet path), kaksi/useampi, (empty for korr path)
+  // Col 4: (empty for osuudet/chi), normaali2/einorm2/normaali3/einorm3, (empty for korr)
+  // Col 5: chi, t, mwu, anova, kw, pearson
+
+  container.innerHTML = `
+    <div class="dt-tree-wrap">
+      <svg class="dt-tree-svg" id="dt-tree-svg"></svg>
+      <div class="dt-tree" id="dt-tree-grid">
+        ${dtNodeHtml('root', 'grid-column:1;grid-row:1/8;align-self:center')}
+        ${dtNodeHtml('osuudet', 'grid-column:2;grid-row:1')}
+        ${dtNodeHtml('chi', 'grid-column:5;grid-row:1')}
+        ${dtNodeHtml('keski', 'grid-column:2;grid-row:2/6;align-self:center')}
+        ${dtNodeHtml('kaksi', 'grid-column:3;grid-row:2/4;align-self:center')}
+        ${dtNodeHtml('useampi', 'grid-column:3;grid-row:4/6;align-self:center')}
+        ${dtNodeHtml('normaali2', 'grid-column:4;grid-row:2')}
+        ${dtNodeHtml('einorm2', 'grid-column:4;grid-row:3')}
+        ${dtNodeHtml('normaali3', 'grid-column:4;grid-row:4')}
+        ${dtNodeHtml('einorm3', 'grid-column:4;grid-row:5')}
+        ${dtNodeHtml('t', 'grid-column:5;grid-row:2')}
+        ${dtNodeHtml('mwu', 'grid-column:5;grid-row:3')}
+        ${dtNodeHtml('anova', 'grid-column:5;grid-row:4')}
+        ${dtNodeHtml('kw', 'grid-column:5;grid-row:5')}
+        ${dtNodeHtml('korr', 'grid-column:2;grid-row:6/8;align-self:center')}
+        ${dtNodeHtml('pearson', 'grid-column:5;grid-row:6')}
+      </div>
+    </div>
+  `;
+
+  // Feedback
+  if (feedback) {
+    if (!dtState.xKey || !dtState.yKey) {
+      feedback.innerHTML = '<div class="dt-feedback dt-fb-hint">Valitse molemmat muuttujat yllä olevista valikoista ja klikkaa sitten oikea polku puussa.</div>';
+    } else if (dtState.xKey === dtState.yKey) {
+      feedback.innerHTML = '<div class="dt-feedback dt-fb-err">Valitse kaksi eri muuttujaa.</div>';
+    } else if (dtState.done) {
+      const testNode = DT_NODES[dtState.correctTest];
+      const xLabel = VARS[dtState.xKey].label;
+      const yLabel = VARS[dtState.yKey].label;
+      feedback.innerHTML = `<div class="dt-feedback dt-fb-ok"><strong>Oikein!</strong> Muuttujaparille <strong>${xLabel}</strong> ja <strong>${yLabel}</strong> sopiva testi on <strong>${testNode.lbl}</strong>.</div>`;
+    } else if (dtState.msg) {
+      feedback.innerHTML = `<div class="dt-feedback dt-fb-err">${dtState.msg}</div>`;
+    } else if (dtState.clickedPath.length > 0) {
+      feedback.innerHTML = '<div class="dt-feedback dt-fb-hint">Hyvä, jatka klikkaamalla seuraavaa solmua polulla.</div>';
+    } else {
+      const xLabel = VARS[dtState.xKey].label;
+      const yLabel = VARS[dtState.yKey].label;
+      feedback.innerHTML = `<div class="dt-feedback dt-fb-hint"><strong>Tutkimme:</strong> ${xLabel} ja ${yLabel} — klikkaa ensimmäistä solmua päättelypuussa.</div>`;
+    }
+  }
+
+  // Show test result when done
+  if (result) {
+    if (dtState.done) {
+      result.innerHTML = dtBuildResultHtml();
+    } else {
+      result.innerHTML = '';
+    }
+  }
+
+  // Draw connectors after DOM update
+  requestAnimationFrame(() => dtDrawConnectors());
+}
+
+function dtClick(nodeId) {
+  if (!dtState.correctTest) {
+    dtState.msg = 'Valitse ensin muuttujapari yläpuolelta.';
+    dtRenderTree();
+    return;
+  }
+  if (dtState.done) return;
+
+  const correctPath = dtState.correctPath;
+  const nextCorrect = correctPath[dtState.clickedPath.length];
+
+  if (nodeId === nextCorrect) {
+    dtState.clickedPath.push(nodeId);
+    dtState.msg = null;
+    // Auto-advance leaf nodes (not clickable)
+    const nextStep = correctPath[dtState.clickedPath.length];
+    if (nextStep && DT_LEAF_IDS.has(nextStep)) {
+      dtState.clickedPath.push(nextStep);
+      dtState.done = true;
+    }
+  } else {
+    // Wrong click
+    dtState.msg = dtWrongFeedback(nodeId);
+    const el = document.getElementById('dt-n-' + nodeId);
+    if (el) {
+      el.classList.add('dt-wrong');
+      setTimeout(() => el.classList.remove('dt-wrong'), 500);
+    }
+  }
+  dtRenderTree();
+}
+
+function dtWrongFeedback(nodeId) {
+  if (!dtState.xKey || !dtState.yKey) return 'Valitse ensin muuttujat.';
+  const xType = getVarType(dtState.xKey);
+  const yType = getVarType(dtState.yKey);
+  const xLabel = VARS[dtState.xKey].label;
+  const yLabel = VARS[dtState.yKey].label;
+
+  const tips = {
+    osuudet: `"Osuudet" sopii kun molemmat muuttujat ovat kategorisia. Tarkista muuttujien tyypit.`,
+    keski: `"Keskiarvoja" sopii kun toinen muuttuja on kategorinen ja toinen jatkuva.`,
+    korr: `"Korrelaatio" sopii kun molemmat muuttujat ovat jatkuvia.`,
+    kaksi: `"2 ryhmää" sopii kun kategorisessa muuttujassa on tasan 2 luokkaa.`,
+    useampi: `"3+ ryhmää" sopii kun kategorisessa muuttujassa on 3 tai useampia luokkia.`,
+    normaali2: `"Normaalijakauma" sopii kun jakauman vinous on ≤ 1.`,
+    einorm2: `"Ei normaali" sopii kun jakauma on vino (vinous > 1).`,
+    normaali3: `"Normaalijakauma" sopii kun jakauman vinous on ≤ 1.`,
+    einorm3: `"Ei normaali" sopii kun jakauma on vino (vinous > 1).`
+  };
+  return tips[nodeId] || 'Ei aivan — yritä toista polkua.';
+}
+
+function dtDrawConnectors() {
+  const svg = document.getElementById('dt-tree-svg');
+  const grid = document.getElementById('dt-tree-grid');
+  if (!svg || !grid) return;
+  const wrap = svg.parentElement;
+  const wrapRect = wrap.getBoundingClientRect();
+  svg.setAttribute('width', wrapRect.width);
+  svg.setAttribute('height', wrapRect.height);
+  svg.innerHTML = '';
+
+  const nodePos = (id) => {
+    const el = document.getElementById('dt-n-' + id);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left - wrapRect.left, right: r.right - wrapRect.left, cy: r.top - wrapRect.top + r.height / 2 };
+  };
+
+  const drawEdge = (from, to, isOnPath) => {
+    const s = nodePos(from), t = nodePos(to);
+    if (!s || !t) return;
+    const midX = (s.right + t.left) / 2;
+    const path = `M ${s.right} ${s.cy} C ${midX} ${s.cy}, ${midX} ${t.cy}, ${t.left} ${t.cy}`;
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', path);
+    p.setAttribute('stroke', isOnPath ? '#10B981' : '#CBD5E1');
+    p.setAttribute('stroke-width', isOnPath ? '3' : '1.5');
+    p.setAttribute('stroke-dasharray', isOnPath ? 'none' : '3 3');
+    p.setAttribute('fill', 'none');
+    p.setAttribute('opacity', isOnPath ? 1 : 0.5);
+    svg.appendChild(p);
+  };
+
+  // Draw all edges (dimmed) then highlight clicked path
+  Object.entries(DT_CHILDREN).forEach(([parent, children]) => {
+    children.forEach(child => {
+      const isOnPath = dtState.clickedPath.includes(child);
+      drawEdge(parent, child, isOnPath);
+    });
+  });
+}
+
+function dtBuildResultHtml() {
+  const xKey = dtState.xKey, yKey = dtState.yKey;
+  const xType = getVarType(xKey), yType = getVarType(yKey);
+  const xLabel = VARS[xKey].label, yLabel = VARS[yKey].label;
+  const testNode = DT_NODES[dtState.correctTest];
+
+  let explanation = '';
+  switch(dtState.correctTest) {
+    case 'chi':
+      explanation = `Molemmat muuttujat (<strong>${xLabel}</strong> ja <strong>${yLabel}</strong>) ovat kategorisia. Tutkitaan eroavatko osuudet ryhmien välillä. Käytetään χ²-testiä.`;
+      break;
+    case 't':
+      explanation = `Vertaillaan jatkuvan muuttujan keskiarvoja kahden ryhmän välillä. Jakauma on riittävän normaali. Käytetään t-testiä.`;
+      break;
+    case 'mwu':
+      explanation = `Vertaillaan jatkuvan muuttujan jakaumia kahden ryhmän välillä. Jakauma on vino, joten käytetään ei-parametristä Mann-Whitney U -testiä.`;
+      break;
+    case 'anova':
+      explanation = `Vertaillaan jatkuvan muuttujan keskiarvoja usean ryhmän välillä. Jakauma on riittävän normaali. Käytetään ANOVA:a.`;
+      break;
+    case 'kw':
+      explanation = `Vertaillaan jatkuvan muuttujan jakaumia usean ryhmän välillä. Jakauma on vino, joten käytetään Kruskal-Wallis -testiä.`;
+      break;
+    case 'pearson':
+      explanation = `Molemmat muuttujat (<strong>${xLabel}</strong> ja <strong>${yLabel}</strong>) ovat jatkuvia. Tutkitaan lineaarista yhteyttä Pearsonin korrelaatiokertoimella.`;
+      break;
+  }
+
+  let testResultHtml = '';
+  try {
+    if (xType === 'continuous' && yType === 'continuous') {
+      const pairs = FILTERED.filter(d => d[xKey] != null && d[yKey] != null);
+      if (pairs.length > 2) {
+        const xs = pairs.map(d => d[xKey]);
+        const ys = pairs.map(d => d[yKey]);
+        const mx = mean(xs), my = mean(ys);
+        const sx = std(xs), sy = std(ys);
+        const n = xs.length;
+        const r = xs.reduce((sum, x, i) => sum + (x - mx) * (ys[i] - my), 0) / ((n - 1) * sx * sy);
+        const t = r * Math.sqrt((n - 2) / (1 - r * r));
+        const p = 2 * (1 - jStat.studentt.cdf(Math.abs(t), n - 2));
+        testResultHtml = `<div class="stat-row" style="margin-top:12px">
+          <div class="stat-box"><div class="stat-lbl">Korrelaatiokerroin (r)</div><div class="stat-val">${fmtNum(r, 3)}</div></div>
+          <div class="stat-box ${p < 0.05 ? 'stat-green' : 'stat-orange'}"><div class="stat-lbl">p-arvo</div><div class="stat-val">${fmtP(p)}</div></div>
+          <div class="stat-box"><div class="stat-lbl">n</div><div class="stat-val">${n}</div></div>
+        </div>`;
+      }
+    } else if (yKey === 'dispo' || xKey === 'dispo') {
+      const nonDispoKey = xKey === 'dispo' ? yKey : xKey;
+      const res = autoTest(nonDispoKey, FILTERED);
+      testResultHtml = `<div class="stat-row" style="margin-top:12px">
+        <div class="stat-box ${res.p < 0.05 ? 'stat-green' : 'stat-orange'}"><div class="stat-lbl">p-arvo (vs. hoidon lopputulos)</div><div class="stat-val">${fmtP(res.p)}</div></div>
+        <div class="stat-box"><div class="stat-lbl">n</div><div class="stat-val">${FILTERED.length}</div></div>
+      </div>`;
+    }
+  } catch (e) {}
+
+  return `
+    <div class="dt-explanation" style="margin-top:14px">
+      <div class="dt-test-name">${testNode.lbl}</div>
+      ${explanation}
+    </div>
+    ${testResultHtml}
+  `;
+}
+
+// Legacy alias for backward compatibility
+function renderDecisionTree() { dtUpdatePair(); }
+
+// ═══════════════════════════════════════════════════════
 // WINDOW RESIZE
 // ═══════════════════════════════════════════════════════
 window.addEventListener('resize', () => {
   Object.keys(panelBuilt).forEach(k => panelBuilt[k] = false);
   renderCurrentTab();
 });
+
+// Observe DOM changes to inject copy/download buttons (debounced)
+let _injectTimer = null;
+const _mainInner = document.querySelector('.main-inner');
+if (_mainInner) {
+  const _observer = new MutationObserver(() => {
+    if (_injectTimer) clearTimeout(_injectTimer);
+    _injectTimer = setTimeout(injectActions, 200);
+  });
+  _observer.observe(_mainInner, {childList: true, subtree: true});
+}
 
 </script>
 </body>
