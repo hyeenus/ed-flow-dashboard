@@ -255,14 +255,17 @@ body{
   .grid-2x2{grid-template-columns:1fr}
 }
 @media(max-width:820px){
-  .sidebar{width:100%;height:auto;position:relative;border-right:none;border-bottom:1px solid var(--border);overflow-y:visible;box-shadow:none}
+  .sidebar{position:fixed;bottom:0;left:0;right:0;top:auto;width:100%;height:auto;flex-direction:row;border-right:none;border-top:1px solid var(--border);overflow-y:visible;box-shadow:none;z-index:200}
   .mobile-tab-bar{display:flex !important;position:fixed;bottom:0;left:0;right:0;height:68px;background:#fff;border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(15,23,42,.08);z-index:1000;overflow-x:auto}
   .mobile-tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 6px;min-width:64px;cursor:pointer;border:none;background:none;color:var(--text-muted);font-size:10px;font-family:var(--font-body);font-weight:500;border-top:3px solid transparent;transition:all .15s}
   .mobile-tab-btn.active{color:var(--primary);border-top-color:var(--primary);background:var(--primary-light)}
   .mobile-tab-btn .mob-icon{font-size:18px}
   .sidebar .sidebar-inner{display:none}
-  .sb-header{display:flex}
-  .main{margin-left:0;padding:20px 18px 40px;padding-bottom:80px;max-width:100%;width:100%}
+  .sb-header{display:none}
+  .sb-section{display:none}
+  .filter-section{display:none}
+  .nav-item{display:none}
+  .main{margin-left:0 !important;padding:20px 18px 40px;padding-bottom:80px;max-width:100% !important;width:100% !important}
   .panel-title{font-size:22px}
   .cc-title{font-size:18px}
   .stat-row{flex-direction:column}
@@ -1298,14 +1301,24 @@ function drawStackedBar(containerId, data, xVar, fillVar, mode, xLevels, fillLev
     g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d=>d+'%'));
   }
 
-  // Legend
-  const legend = svg.append('g').attr('transform',`translate(${m.left},${height-12})`);
-  fillLevels.forEach((fl,i) => {
-    const lg = legend.append('g').attr('transform',`translate(${i*120},0)`);
-    lg.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',DISPO_COLORS[fl]||'#999');
-    lg.append('text').attr('x',16).attr('y',10).attr('font-size','11px').attr('fill','var(--text-muted)')
-      .attr('font-family','var(--font-body)').text(fl);
-  });
+  // Legend — when labels are rotated, place inside chart area at top-right to avoid overlap
+  if (rotateLabels) {
+    const legendG = g.append('g').attr('transform',`translate(${w - fillLevels.length * 120 + 20}, -10)`);
+    fillLevels.forEach((fl,i) => {
+      const lg = legendG.append('g').attr('transform',`translate(${i*120},0)`);
+      lg.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',DISPO_COLORS[fl]||'#999');
+      lg.append('text').attr('x',16).attr('y',10).attr('font-size','11px').attr('fill','var(--text-muted)')
+        .attr('font-family','var(--font-body)').text(fl);
+    });
+  } else {
+    const legend = svg.append('g').attr('transform',`translate(${m.left},${height-12})`);
+    fillLevels.forEach((fl,i) => {
+      const lg = legend.append('g').attr('transform',`translate(${i*120},0)`);
+      lg.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',DISPO_COLORS[fl]||'#999');
+      lg.append('text').attr('x',16).attr('y',10).attr('font-size','11px').attr('fill','var(--text-muted)')
+        .attr('font-family','var(--font-body)').text(fl);
+    });
+  }
 }
 
 function drawBoxplot(containerId, data, contVar, groupVar, groups) {
@@ -2356,6 +2369,7 @@ function buildRuleModel() {
   `;
 
   updateRuleInputs();
+  renderRuleList();
   renderRuleResults();
 }
 
