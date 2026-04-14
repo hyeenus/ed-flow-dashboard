@@ -262,7 +262,7 @@ body{
   .mobile-tab-btn .mob-icon{font-size:18px}
   .sidebar .sidebar-inner{display:none}
   .sb-header{display:flex}
-  .main{margin-left:0;margin-bottom:80px;padding:20px 18px 40px;max-width:100%}
+  .main{margin-left:0;padding:20px 18px 40px;padding-bottom:80px;max-width:100%;width:100%}
   .panel-title{font-size:22px}
   .cc-title{font-size:18px}
   .stat-row{flex-direction:column}
@@ -390,7 +390,6 @@ body{
           <label><input type="checkbox" value="Auto" checked> Auto</label>
           <label><input type="checkbox" value="Ambulanssi" checked> Ambulanssi</label>
           <label><input type="checkbox" value="Kävellen" checked> Kävellen</label>
-          <label><input type="checkbox" value="Poliisi" checked> Poliisi</label>
           <label><input type="checkbox" value="Julkinen liikenne" checked> Julkinen</label>
           <label><input type="checkbox" value="Muu" checked> Muu</label>
         </div>
@@ -502,7 +501,7 @@ body{
       </div>
       <div class="nav-item" data-tab="decision-tree" onclick="showTab('decision-tree')">
         <div class="nav-icon">🌳</div>
-        <div><div class="nav-label">Päättelypuu</div></div>
+        <div><div class="nav-label">Tilastollinen menetelmä</div></div>
       </div>
     </div>
   </div>
@@ -573,7 +572,7 @@ const VARS = {
   siviilisaaty: {label:"Siviilisääty", type:"cat", group:"taustatiedot", levels:["Naimaton","Naimisissa","Eronnut","Leski","Muu/Tuntematon"]},
   tyollisyys: {label:"Työllisyys", type:"cat", group:"taustatiedot", levels:["Työssä","Työtön","Eläkeläinen","Työkyvytön","Opiskelija","Muu/Tuntematon"]},
   esi: {label:"ESI-luokka", type:"ordinal", group:"kaynti", levels:["1","2","3","4","5"]},
-  saapumistapa: {label:"Saapumistapa", type:"cat", group:"kaynti", levels:["Auto","Ambulanssi","Kävellen","Poliisi","Julkinen liikenne","Muu"]},
+  saapumistapa: {label:"Saapumistapa", type:"cat", group:"kaynti", levels:["Auto","Ambulanssi","Kävellen","Julkinen liikenne","Muu"]},
   viikonpaiva: {label:"Viikonpäivä", type:"cat", group:"kaynti", levels:["Ma","Ti","Ke","To","Pe","La","Su"]},
   kellonaika: {label:"Kellonaika", type:"cat", group:"kaynti", levels:["07-10","11-14","15-18","19-22","23-02","03-06"]},
   kuukausi: {label:"Kuukausi", type:"cat", group:"kaynti", levels:["Tammi","Helmi","Maalis","Huhti","Touko","Kesä","Heinä","Elo","Syys","Loka","Marras","Joulu"]},
@@ -1205,8 +1204,9 @@ function drawStackedBar(containerId, data, xVar, fillVar, mode, xLevels, fillLev
   clearChart(containerId);
   const width = getContainerWidth(containerId);
   if (width < 50) return;
+  const rotateLabels = (containerId === 'chart-complaints' || containerId === 'chart-meds');
   const height = Math.min(360, Math.max(240, width * 0.5));
-  const m = {top:20, right:20, bottom:60, left:55};
+  const m = {top:20, right:20, bottom: rotateLabels ? 100 : 60, left:55};
   const w = width - m.left - m.right;
   const h = height - m.top - m.bottom;
 
@@ -1256,7 +1256,12 @@ function drawStackedBar(containerId, data, xVar, fillVar, mode, xLevels, fillLev
         y0 += val;
       });
     });
-    g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x)).selectAll('text').attr('font-size','11px');
+    const xAxisCount = g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x));
+    if (rotateLabels) {
+      xAxisCount.selectAll('text').attr('transform','rotate(-45)').attr('text-anchor','end').attr('dx','-0.5em').attr('dy','0.3em').attr('font-size','11px');
+    } else {
+      xAxisCount.selectAll('text').attr('font-size','11px');
+    }
     g.append('g').call(d3.axisLeft(y).ticks(5));
   } else {
     // Percentage mode
@@ -1284,7 +1289,12 @@ function drawStackedBar(containerId, data, xVar, fillVar, mode, xLevels, fillLev
         y0 += pct;
       });
     });
-    g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x)).selectAll('text').attr('font-size','11px');
+    const xAxisPct = g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x));
+    if (rotateLabels) {
+      xAxisPct.selectAll('text').attr('transform','rotate(-45)').attr('text-anchor','end').attr('dx','-0.5em').attr('dy','0.3em').attr('font-size','11px');
+    } else {
+      xAxisPct.selectAll('text').attr('font-size','11px');
+    }
     g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d=>d+'%'));
   }
 
@@ -1452,7 +1462,7 @@ function buildCrossTab(data, catVar, levels) {
       const count = sub.filter(r => r.dispo === d).length;
       grandDispo[d] += count;
       const pct = total > 0 ? fmtNum(100*count/total,1) : '0,0';
-      html += `<td>${count}<span class="pct">${pct} %</span></td>`;
+      html += `<td>${count} (${pct} %)</td>`;
     });
     html += `<td class="total">${total}</td></tr>`;
   });
@@ -1460,7 +1470,7 @@ function buildCrossTab(data, catVar, levels) {
   html += '<tr class="total-row"><th>Yhteensä</th>';
   dispoLevels.forEach(d => {
     const pct = grandTotal > 0 ? fmtNum(100*grandDispo[d]/grandTotal,1) : '0,0';
-    html += `<td>${grandDispo[d]}<span class="pct">${pct} %</span></td>`;
+    html += `<td>${grandDispo[d]} (${pct} %)</td>`;
   });
   html += `<td>${grandTotal}</td></tr></tbody></table>`;
   return html;
@@ -1469,6 +1479,20 @@ function buildCrossTab(data, catVar, levels) {
 // ═══════════════════════════════════════════════════════
 // CONTINUOUS STATS TABLE
 // ═══════════════════════════════════════════════════════
+// Determine decimal places for a variable key in stats tables
+function getStatsDecimals(vk) {
+  // Temperature (lampo) always 1 decimal
+  if (vk.includes('lampo')) return 1;
+  // Vitals: integer (0 decimals) for non-temperature
+  const info = VARS[vk];
+  if (info && (info.group === 'vitaalit_triage' || info.group === 'vitaalit_viim')) return 0;
+  // Labs: specific integer labs
+  const integerLabs = ['lab_hb','lab_trom','lab_krea','lab_na','lab_cl','lab_ck'];
+  if (integerLabs.includes(vk)) return 0;
+  // Default: 1 decimal
+  return 1;
+}
+
 function buildContStatsTable(data, varKeys) {
   const groups = ['Kotiutunut','Osastolle'];
   let html = '<table class="ctable"><thead><tr><th>Muuttuja</th>';
@@ -1477,6 +1501,7 @@ function buildContStatsTable(data, varKeys) {
   varKeys.forEach(vk => {
     const info = VARS[vk];
     if (!info) return;
+    const dec = getStatsDecimals(vk);
     html += '<tr><th>' + info.label + '</th>';
     groups.forEach(grp => {
       const vals = data.filter(d => d.dispo===grp).map(d=>d[vk]).filter(v=>v!=null);
@@ -1484,7 +1509,7 @@ function buildContStatsTable(data, varKeys) {
       const med = quantile(vals, 0.5);
       const q1 = quantile(vals, 0.25);
       const q3 = quantile(vals, 0.75);
-      html += `<td>${fmtNum(med,1)} (${fmtNum(q1,1)}–${fmtNum(q3,1)})</td>`;
+      html += `<td>${fmtNum(med,dec)} (${fmtNum(q1,dec)}–${fmtNum(q3,dec)})</td>`;
     });
     html += '</tr>';
   });
@@ -1775,8 +1800,8 @@ function renderComplaints() {
     const osas = sub.filter(d=>d.dispo==='Osastolle').length;
     const tot = sub.length;
     html += `<tr><th>${VARS[k].label}</th>
-      <td>${koti}<span class="pct">${pctStr(koti,tot)} %</span></td>
-      <td>${osas}<span class="pct">${pctStr(osas,tot)} %</span></td>
+      <td>${koti} (${pctStr(koti,tot)} %)</td>
+      <td>${osas} (${pctStr(osas,tot)} %)</td>
       <td class="total">${tot}</td></tr>`;
   });
   html += '</tbody></table>';
@@ -1993,8 +2018,8 @@ function renderImaging() {
     const osas = sub.filter(d=>d.dispo==='Osastolle').length;
     const tot = sub.length;
     html += `<tr><th>${VARS[k].label}</th>
-      <td>${koti}<span class="pct">${pctStr(koti,tot)} %</span></td>
-      <td>${osas}<span class="pct">${pctStr(osas,tot)} %</span></td>
+      <td>${koti} (${pctStr(koti,tot)} %)</td>
+      <td>${osas} (${pctStr(osas,tot)} %)</td>
       <td class="total">${tot}</td></tr>`;
   });
   html += '</tbody></table>';
@@ -2063,8 +2088,8 @@ function renderMeds() {
     const osas = sub.filter(d=>d.dispo==='Osastolle').length;
     const tot = sub.length;
     html += `<tr><th>${VARS[k].label}</th>
-      <td>${koti}<span class="pct">${pctStr(koti,tot)} %</span></td>
-      <td>${osas}<span class="pct">${pctStr(osas,tot)} %</span></td>
+      <td>${koti} (${pctStr(koti,tot)} %)</td>
+      <td>${osas} (${pctStr(osas,tot)} %)</td>
       <td class="total">${tot}</td></tr>`;
   });
   html += '</tbody></table>';
@@ -2072,7 +2097,35 @@ function renderMeds() {
 }
 
 // ─── SUMMARY TABLE (Analyysit) ───
+// Persistent state for summary table selections (survives rebuild on resize)
+let _sumTableState = { selectedVars: [], split: true, showP: false };
+
+function _saveSumTableState() {
+  const varCbs = document.querySelectorAll('.sumtable-var:checked');
+  if (varCbs.length > 0 || document.querySelector('.sumtable-var')) {
+    _sumTableState.selectedVars = [...varCbs].map(c => c.value);
+  }
+  const splitEl = document.getElementById('sumtable-split');
+  if (splitEl) _sumTableState.split = splitEl.checked;
+  const pvalEl = document.getElementById('sumtable-pval');
+  if (pvalEl) _sumTableState.showP = pvalEl.checked;
+}
+
+function _restoreSumTableState() {
+  _sumTableState.selectedVars.forEach(v => {
+    const cb = document.querySelector(`.sumtable-var[value="${v}"]`);
+    if (cb) cb.checked = true;
+  });
+  const splitEl = document.getElementById('sumtable-split');
+  if (splitEl) splitEl.checked = _sumTableState.split;
+  const pvalEl = document.getElementById('sumtable-pval');
+  if (pvalEl) pvalEl.checked = _sumTableState.showP;
+}
+
 function buildSummaryTable() {
+  // Save current selections before rebuilding
+  _saveSumTableState();
+
   const panel = document.getElementById('panel-summary-table');
   // Group variables for selection
   const varGroups = {};
@@ -2117,6 +2170,12 @@ function buildSummaryTable() {
       </div>
     </div>
   `;
+
+  // Restore saved selections after rebuild
+  _restoreSumTableState();
+  if (_sumTableState.selectedVars.length > 0) {
+    renderSummaryTable();
+  }
 }
 
 function renderSummaryTable() {
@@ -2214,7 +2273,7 @@ function renderSummaryTable() {
 }
 
 // ─── RULE-BASED MODEL ───
-let ruleDirection = 'osastolle'; // 'osastolle' | 'fasttrack' — default: ohjaa sairaalan päivystykseen
+// Each rule has: varKey, type, op/val or values, text, direction ('sairaala' | 'fasttrack')
 
 function buildRuleModel() {
   const panel = document.getElementById('panel-rule-model');
@@ -2232,16 +2291,11 @@ function buildRuleModel() {
   panel.innerHTML = `
     <div class="panel-header">
       <div class="panel-eyebrow">Analyysit</div>
-      <div class="panel-title">Fast Track -ohjaussääntö</div>
-      <div class="panel-desc">Luo sääntö, jolla tunnistetaan potilaat ja ohjataan heitä oikeaan hoitopaikkaan.</div>
+      <div class="panel-title">Potilaiden ohjaussääntö</div>
+      <div class="panel-desc">Luo sääntöjä, joilla potilaat ohjataan oikeaan hoitopaikkaan. Jokainen sääntö ohjaa potilaat joko sairaalaan tai Fast Trackille. Säännöt sovelletaan järjestyksessä — loput jaetaan satunnaisesti 50/50.</div>
     </div>
     <div class="split-panel">
       <div class="split-left" id="rule-builder-panel">
-        <div class="rule-direction-toggle">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);font-weight:600;margin-bottom:6px">Säännön suunta</div>
-          <label><input type="radio" name="rule-dir" value="osastolle" checked onchange="ruleDirection='osastolle';renderRuleResults()"> Ohjaa sairaalan päivystykseen <span style="color:var(--text-dim);font-size:11px">(sääntö tunnistaa osastopotilaat)</span></label>
-          <label><input type="radio" name="rule-dir" value="fasttrack" onchange="ruleDirection='fasttrack';renderRuleResults()"> Ohjaa Fast Trackille <span style="color:var(--text-dim);font-size:11px">(sääntö tunnistaa kotiutettavat)</span></label>
-        </div>
         <div class="section-title">Sääntöjen rakentaja</div>
         <div class="rule-builder">
           <div class="rule-row">
@@ -2270,9 +2324,18 @@ function buildRuleModel() {
           </div>
           <div id="rule-cat-inputs" style="display:none;max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;background:#fff;margin-bottom:8px">
           </div>
+          <div class="rule-row" style="margin-top:4px">
+            <div>
+              <label style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);font-weight:600;display:block;margin-bottom:3px">Ohjaus</label>
+              <select id="rule-direction-select" style="min-width:160px">
+                <option value="sairaala">&#x1F3E5; Sairaala</option>
+                <option value="fasttrack">&#x26A1; Fast Track</option>
+              </select>
+            </div>
+          </div>
           <div style="display:flex;gap:8px;margin-top:8px">
             <button class="btn btn-success" onclick="addRule()">Lisää sääntö</button>
-            <button class="btn btn-danger" onclick="clearRules()">Tyhjennä</button>
+            <button class="btn btn-danger" onclick="clearRules()">Tyhjennä kaikki</button>
           </div>
         </div>
         <div class="section-title" style="margin-top:12px">Aktiiviset säännöt</div>
@@ -2283,7 +2346,8 @@ function buildRuleModel() {
       <div class="split-right" id="rule-results">
         <div class="rule-metrics" id="rule-metrics"></div>
         <div class="stat-row" id="rule-stats" style="margin-bottom:14px"></div>
-        <div class="chart-card"><div class="cc-header"><div class="cc-header-text"><div class="cc-title">Vertailu</div></div></div>
+        <div id="rule-per-rule-breakdown" style="margin-bottom:14px"></div>
+        <div class="chart-card"><div class="cc-header"><div class="cc-header-text"><div class="cc-title">Vertailu: Satunnainen (50/50) vs. Säännöillä</div></div></div>
           <div class="cc-body"><div class="cc-chart" id="chart-rule"></div></div>
           <div class="cc-footer" id="table-rule"></div>
         </div>
@@ -2309,7 +2373,6 @@ function updateRuleInputs() {
   } else {
     numInputs.style.display = 'none';
     catInputs.style.display = 'block';
-    // Build checkboxes for categorical levels
     let levels;
     if (info.type === 'binary') {
       levels = [{val:'1', lbl:'Kyllä'}, {val:'0', lbl:'Ei'}];
@@ -2327,17 +2390,18 @@ function updateRuleInputs() {
 function addRule() {
   const varKey = document.getElementById('rule-var').value;
   const info = VARS[varKey];
+  const direction = document.getElementById('rule-direction-select').value;
 
   if (info.type === 'cont') {
     const op = document.getElementById('rule-op').value;
     const val = parseFloat(document.getElementById('rule-val').value);
     if (isNaN(val)) return;
-    activeRules.push({varKey, type:'numeric', op, val, text:`${info.label} ${op} ${val}`});
+    activeRules.push({varKey, type:'numeric', op, val, direction, text:`${info.label} ${op} ${val}`});
   } else {
     const checked = [...document.querySelectorAll('#rule-cat-inputs .rule-cat-cb:checked')].map(c=>c.value);
     if (checked.length === 0) return;
     const labels = checked.join(', ');
-    activeRules.push({varKey, type:'cat', values:checked, text:`${info.label} = ${labels}`});
+    activeRules.push({varKey, type:'cat', values:checked, direction, text:`${info.label} = ${labels}`});
   }
 
   renderRuleList();
@@ -2356,105 +2420,152 @@ function removeRule(idx) {
   renderRuleResults();
 }
 
+function moveRule(idx, delta) {
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= activeRules.length) return;
+  const tmp = activeRules[idx];
+  activeRules[idx] = activeRules[newIdx];
+  activeRules[newIdx] = tmp;
+  renderRuleList();
+  renderRuleResults();
+}
+
 function renderRuleList() {
   const list = document.getElementById('rule-list');
   if (activeRules.length === 0) {
     list.innerHTML = '<li style="color:var(--text-dim);font-style:italic;border:none;background:none;padding:4px 0">Ei sääntöjä</li>';
     return;
   }
-  list.innerHTML = activeRules.map((r, i) =>
-    `<li><span class="rule-num">${i+1}.</span><span class="rule-text">${r.text}</span><button class="rule-remove" onclick="removeRule(${i})" title="Poista">&times;</button></li>`
-  ).join('');
+  list.innerHTML = activeRules.map((r, i) => {
+    const dirIcon = r.direction === 'sairaala' ? '\u{1F3E5}' : '\u26A1';
+    const dirLabel = r.direction === 'sairaala' ? 'Sairaala' : 'Fast Track';
+    const dirColor = r.direction === 'sairaala' ? 'var(--primary)' : 'var(--success)';
+    const borderColor = r.direction === 'sairaala' ? 'var(--primary-light)' : 'var(--success-light)';
+    return `<li style="border-left:3px solid ${dirColor};background:${borderColor}">
+      <span class="rule-num">${i+1}.</span>
+      <span class="rule-text">${r.text} <span style="font-weight:600;color:${dirColor}">${dirIcon} ${dirLabel}</span></span>
+      <span style="display:flex;flex-direction:column;gap:1px;margin-left:auto">
+        <button style="background:none;border:none;cursor:pointer;font-size:10px;padding:0 2px;color:var(--text-muted)" onclick="moveRule(${i},-1)" title="Ylös">&#9650;</button>
+        <button style="background:none;border:none;cursor:pointer;font-size:10px;padding:0 2px;color:var(--text-muted)" onclick="moveRule(${i},1)" title="Alas">&#9660;</button>
+      </span>
+      <button class="rule-remove" onclick="removeRule(${i})" title="Poista">&times;</button>
+    </li>`;
+  }).join('');
 }
 
-function applyRulesToData(data) {
-  return data.filter(d => {
-    return activeRules.every(rule => {
-      const val = d[rule.varKey];
-      if (rule.type === 'numeric') {
-        if (val == null) return false;
-        switch(rule.op) {
-          case '>': return val > rule.val;
-          case '<': return val < rule.val;
-          case '>=': return val >= rule.val;
-          case '<=': return val <= rule.val;
-          case '=': return val === rule.val;
-        }
-      } else {
-        return rule.values.includes(String(val));
+// Check if a single rule matches a data point
+function ruleMatches(rule, d) {
+  const val = d[rule.varKey];
+  if (rule.type === 'numeric') {
+    if (val == null) return false;
+    switch(rule.op) {
+      case '>': return val > rule.val;
+      case '<': return val < rule.val;
+      case '>=': return val >= rule.val;
+      case '<=': return val <= rule.val;
+      case '=': return val === rule.val;
+    }
+  } else {
+    return rule.values.includes(String(val));
+  }
+  return false;
+}
+
+// Apply rules in order: each rule claims unclaimed patients
+function applyRulesInOrder(data) {
+  const claimed = new Array(data.length).fill(-1); // -1 = unclaimed, index = rule index
+  activeRules.forEach((rule, ri) => {
+    data.forEach((d, di) => {
+      if (claimed[di] === -1 && ruleMatches(rule, d)) {
+        claimed[di] = ri;
       }
-      return false;
     });
   });
+  return claimed;
 }
 
 function renderRuleResults() {
-  const matched = applyRulesToData(FILTERED);
-  const nonMatched = FILTERED.filter(d => !matched.includes(d));
   const N = FILTERED.length;
-  const n = matched.length;
-  const nNon = nonMatched.length;
   const allOsasto = FILTERED.filter(d=>d.dispo==='Osastolle').length;
   const allKoti = FILTERED.filter(d=>d.dispo==='Kotiutunut').length;
-  const mOsasto = matched.filter(d=>d.dispo==='Osastolle').length;
-  const mKoti = matched.filter(d=>d.dispo==='Kotiutunut').length;
-  const nmOsasto = nonMatched.filter(d=>d.dispo==='Osastolle').length;
-  const nmKoti = nonMatched.filter(d=>d.dispo==='Kotiutunut').length;
-
-  // ─── Better before/after metrics ───
-  const dir = ruleDirection;
   const hasRules = activeRules.length > 0;
-  let baseWrongPct, baseWrongN, baseWrongLabel;
-  let ruleWrongPct, ruleWrongN;
 
-  if (dir === 'osastolle') {
-    // Baseline: if all go to Fast Track, admission rate = those who need hospital are in wrong place
-    baseWrongPct = N > 0 ? 100 * allOsasto / N : 0;
-    baseWrongN = allOsasto;
-    baseWrongLabel = 'Satunnaisesti jaettuna (kaikki Fast Trackille)';
-    if (hasRules) {
-      // With rule: wrong = matched-but-discharged + non-matched-but-admitted
-      const wrongWithRule = mKoti + nmOsasto;
-      ruleWrongPct = N > 0 ? 100 * wrongWithRule / N : 0;
-      ruleWrongN = wrongWithRule;
-    }
-  } else {
-    // Baseline: if all go to hospital, discharge rate = those who could have gone home
-    baseWrongPct = N > 0 ? 100 * allKoti / N : 0;
-    baseWrongN = allKoti;
-    baseWrongLabel = 'Satunnaisesti jaettuna (kaikki osastolle)';
-    if (hasRules) {
-      // With rule: wrong = matched-but-admitted + non-matched-but-discharged
-      const wrongWithRule = mOsasto + nmKoti;
-      ruleWrongPct = N > 0 ? 100 * wrongWithRule / N : 0;
-      ruleWrongN = wrongWithRule;
-    }
-  }
+  // Baseline: 50/50 random allocation
+  // Wrong = 50% of admitted patients (sent to FT) + 50% of discharged patients (sent to hospital)
+  const baseWrongN = Math.round(allOsasto * 0.5 + allKoti * 0.5);
+  const baseWrongPct = N > 0 ? 100 * baseWrongN / N : 0;
+  const baseCorrectN = N - baseWrongN;
+  const baseCorrectPct = N > 0 ? 100 * baseCorrectN / N : 0;
 
+  // Apply rules in order
+  const claimed = applyRulesInOrder(FILTERED);
+
+  // Calculate rule results
+  let ruleCorrectN = 0;
+  let ruleWrongN = 0;
+  let unclaimedN = 0;
+  let unclaimedOsasto = 0;
+  let unclaimedKoti = 0;
+
+  // Per-rule stats
+  const perRule = activeRules.map(() => ({matched:0, correct:0, wrong:0}));
+
+  FILTERED.forEach((d, di) => {
+    const ri = claimed[di];
+    if (ri === -1) {
+      // Unclaimed: 50/50 random
+      unclaimedN++;
+      if (d.dispo === 'Osastolle') unclaimedOsasto++;
+      else unclaimedKoti++;
+    } else {
+      const rule = activeRules[ri];
+      perRule[ri].matched++;
+      if (rule.direction === 'sairaala') {
+        // Sent to hospital — correct if actually admitted
+        if (d.dispo === 'Osastolle') { ruleCorrectN++; perRule[ri].correct++; }
+        else { ruleWrongN++; perRule[ri].wrong++; }
+      } else {
+        // Sent to fast track — correct if actually discharged
+        if (d.dispo === 'Kotiutunut') { ruleCorrectN++; perRule[ri].correct++; }
+        else { ruleWrongN++; perRule[ri].wrong++; }
+      }
+    }
+  });
+
+  // Unclaimed patients: 50/50 random, so expected correct = 50%
+  const unclaimedCorrect = Math.round(unclaimedOsasto * 0.5 + unclaimedKoti * 0.5);
+  const totalCorrectN = ruleCorrectN + unclaimedCorrect;
+  const totalWrongN = N - totalCorrectN;
+  const totalCorrectPct = N > 0 ? 100 * totalCorrectN / N : 0;
+  const totalWrongPct = N > 0 ? 100 * totalWrongN / N : 0;
+
+  // ─── Metrics cards ───
   let metricsHtml = `
     <div class="rule-metric-card rm-before">
-      <div class="rm-label">${baseWrongLabel}</div>
-      <div class="rm-val">${fmtNum(baseWrongPct,1)} % potilaista ohjautuu väärään paikkaan</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${baseWrongN} potilasta / ${N}</div>
+      <div class="rm-label">Satunnainen (50/50)</div>
+      <div class="rm-val">Oikein ohjautuneet: ${baseCorrectN} / ${N} (${fmtNum(baseCorrectPct,1)} %)</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Väärässä paikassa: ${baseWrongN} potilasta (${fmtNum(baseWrongPct,1)} %)</div>
     </div>`;
 
   if (hasRules) {
-    const improvementPp = baseWrongPct - ruleWrongPct;
-    const improvementN = baseWrongN - ruleWrongN;
+    const improvementN = totalCorrectN - baseCorrectN;
+    const improvementPp = totalCorrectPct - baseCorrectPct;
     metricsHtml += `
     <div class="rule-metric-card rm-after">
-      <div class="rm-label">Säännöllä</div>
-      <div class="rm-val">${fmtNum(ruleWrongPct,1)} % ohjautuu väärään paikkaan</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${ruleWrongN} potilasta / ${N}</div>
+      <div class="rm-label">Säännöillä</div>
+      <div class="rm-val">Oikein ohjautuneet: ${totalCorrectN} / ${N} (${fmtNum(totalCorrectPct,1)} %)</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Väärässä paikassa: ${totalWrongN} potilasta (${fmtNum(totalWrongPct,1)} %)</div>
     </div>
     <div class="rule-metric-card rm-improve">
       <div class="rm-label">Parannus</div>
-      <div class="rm-val" style="color:${improvementPp>=0?'var(--success)':'var(--error)'}">${improvementN} potilasta vähemmän väärässä paikassa (${improvementPp>=0?'+':''}${fmtNum(improvementPp,1)} prosenttiyksikköä)</div>
+      <div class="rm-val" style="color:${improvementN>=0?'var(--success)':'var(--error)'}">
+        ${improvementN>=0?'+':''}${improvementN} potilasta oikein (${improvementPp>=0?'+':''}${fmtNum(improvementPp,1)} prosenttiyksikköä)
+      </div>
     </div>`;
   } else {
     metricsHtml += `
     <div class="rule-metric-card rm-after" style="border-left-color:var(--text-dim)">
-      <div class="rm-label">Säännöllä</div>
+      <div class="rm-label">Säännöillä</div>
       <div class="rm-val" style="color:var(--text-dim);font-size:13px">Lisää sääntö aloittaaksesi</div>
     </div>`;
   }
@@ -2462,30 +2573,41 @@ function renderRuleResults() {
   document.getElementById('rule-metrics').innerHTML = metricsHtml;
 
   // Stat boxes
-  const matchedOsastoPct = n > 0 ? 100*mOsasto/n : 0;
-  const matchedKotiPct = n > 0 ? 100*mKoti/n : 0;
-
-  if (dir === 'osastolle') {
+  if (hasRules) {
+    const claimedTotal = N - unclaimedN;
     document.getElementById('rule-stats').innerHTML = `
-      <div class="stat-box"><div class="stat-lbl">Sääntöön sopivat (→ osasto)</div><div class="stat-val">${n}</div><div class="stat-sub">${N>0?fmtNum(100*n/N,1):'0'} % kaikista</div></div>
-      <div class="stat-box stat-teal"><div class="stat-lbl">Oikeasti osastolle</div><div class="stat-val">${fmtNum(matchedOsastoPct,1)} %</div><div class="stat-sub">${mOsasto} / ${n}</div></div>
-      <div class="stat-box stat-orange"><div class="stat-lbl">Väärä ohjaus (kotiutettava → osasto)</div><div class="stat-val">${fmtNum(matchedKotiPct,1)} %</div><div class="stat-sub">${mKoti} / ${n}</div></div>
+      <div class="stat-box"><div class="stat-lbl">Sääntöihin sopivat</div><div class="stat-val">${claimedTotal}</div><div class="stat-sub">${N>0?fmtNum(100*claimedTotal/N,1):'0'} % kaikista</div></div>
+      <div class="stat-box stat-green"><div class="stat-lbl">Oikein ohjattu (säännöt)</div><div class="stat-val">${ruleCorrectN}</div><div class="stat-sub">${claimedTotal>0?fmtNum(100*ruleCorrectN/claimedTotal,1):'0'} %</div></div>
+      <div class="stat-box stat-orange"><div class="stat-lbl">Väärä ohjaus (säännöt)</div><div class="stat-val">${ruleWrongN}</div><div class="stat-sub">${claimedTotal>0?fmtNum(100*ruleWrongN/claimedTotal,1):'0'} %</div></div>
+      <div class="stat-box"><div class="stat-lbl">Ilman sääntöä (50/50)</div><div class="stat-val">${unclaimedN}</div><div class="stat-sub">${N>0?fmtNum(100*unclaimedN/N,1):'0'} % kaikista</div></div>
     `;
   } else {
-    document.getElementById('rule-stats').innerHTML = `
-      <div class="stat-box"><div class="stat-lbl">Sääntöön sopivat (→ Fast Track)</div><div class="stat-val">${n}</div><div class="stat-sub">${N>0?fmtNum(100*n/N,1):'0'} % kaikista</div></div>
-      <div class="stat-box stat-teal"><div class="stat-lbl">Oikeasti kotiutunut</div><div class="stat-val">${fmtNum(matchedKotiPct,1)} %</div><div class="stat-sub">${mKoti} / ${n}</div></div>
-      <div class="stat-box stat-orange"><div class="stat-lbl">Väärä ohjaus (osasto-potilas → FT)</div><div class="stat-val">${fmtNum(matchedOsastoPct,1)} %</div><div class="stat-sub">${mOsasto} / ${n}</div></div>
-    `;
+    document.getElementById('rule-stats').innerHTML = '';
   }
 
-  // Comparison bar chart
+  // ─── Per-rule breakdown ───
+  const breakdownEl = document.getElementById('rule-per-rule-breakdown');
+  if (hasRules && breakdownEl) {
+    let bHtml = '<div class="chart-card" style="margin-bottom:0"><div class="cc-header"><div class="cc-header-text"><div class="cc-title">Sääntökohtainen erittely</div></div></div><div class="cc-body" style="overflow-x:auto"><table class="ctable"><thead><tr><th>#</th><th>Sääntö</th><th>Suunta</th><th>Sopivat</th><th>Oikein</th><th>Väärä</th><th>Tarkkuus</th></tr></thead><tbody>';
+    activeRules.forEach((r, i) => {
+      const pr = perRule[i];
+      const acc = pr.matched > 0 ? fmtNum(100*pr.correct/pr.matched,1) : '-';
+      const dirIcon = r.direction === 'sairaala' ? '\u{1F3E5}' : '\u26A1';
+      const dirLabel = r.direction === 'sairaala' ? 'Sairaala' : 'Fast Track';
+      bHtml += `<tr><th>${i+1}</th><td style="text-align:left;font-family:var(--font-body)">${r.text}</td><td>${dirIcon} ${dirLabel}</td><td>${pr.matched}</td><td style="color:var(--success)">${pr.correct}</td><td style="color:var(--error)">${pr.wrong}</td><td>${acc} %</td></tr>`;
+    });
+    bHtml += `<tr class="total-row"><th></th><td style="text-align:left;font-family:var(--font-body);font-weight:600">Ilman sääntöä (50/50)</td><td>-</td><td>${unclaimedN}</td><td style="color:var(--success)">${unclaimedCorrect}</td><td style="color:var(--error)">${unclaimedN - unclaimedCorrect}</td><td>50,0 %</td></tr>`;
+    bHtml += '</tbody></table></div></div>';
+    breakdownEl.innerHTML = bHtml;
+  } else if (breakdownEl) {
+    breakdownEl.innerHTML = '';
+  }
+
+  // ─── Comparison bar chart ───
   clearChart('chart-rule');
   const cWidth = getContainerWidth('chart-rule');
   if (cWidth > 50) {
-    const dirLabel = dir === 'osastolle' ? 'Säännön muk. (→ osasto)' : 'Säännön muk. (→ Fast Track)';
-    const nonLabel = dir === 'osastolle' ? 'Loput (→ Fast Track)' : 'Loput (→ osasto)';
-    const cHeight = 240;
+    const cHeight = 200;
     const cm = {top:15,right:20,bottom:40,left:180};
     const cw = cWidth-cm.left-cm.right;
     const ch = cHeight-cm.top-cm.bottom;
@@ -2495,53 +2617,53 @@ function renderRuleResults() {
       .attr('preserveAspectRatio','xMidYMid meet');
     const g = svg.append('g').attr('transform',`translate(${cm.left},${cm.top})`);
 
-    const groups = ['Kaikki potilaat', dirLabel, nonLabel];
+    const groups = ['Satunnainen (50/50)', 'Säännöillä'];
     const y = d3.scaleBand().domain(groups).range([0,ch]).padding(0.25);
     const x = d3.scaleLinear().domain([0,100]).range([0,cw]);
 
     g.append('g').attr('class','grid').call(d3.axisBottom(x).ticks(5).tickSize(ch).tickFormat(d=>d+'%'));
 
     const barData = [
-      {group:'Kaikki potilaat', koti: N>0?100*allKoti/N:0, osas: N>0?100*allOsasto/N:0},
-      {group:dirLabel, koti: n>0?100*mKoti/n:0, osas: n>0?100*mOsasto/n:0},
-      {group:nonLabel, koti: nNon>0?100*nmKoti/nNon:0, osas: nNon>0?100*nmOsasto/nNon:0}
+      {group:'Satunnainen (50/50)', correct: baseCorrectPct, wrong: baseWrongPct},
+      {group:'Säännöillä', correct: hasRules ? totalCorrectPct : baseCorrectPct, wrong: hasRules ? totalWrongPct : baseWrongPct}
     ];
 
     barData.forEach(bd => {
-      g.append('rect').attr('x',0).attr('y',y(bd.group)).attr('width',x(bd.koti)).attr('height',y.bandwidth())
+      g.append('rect').attr('x',0).attr('y',y(bd.group)).attr('width',x(bd.correct)).attr('height',y.bandwidth())
         .attr('fill',DISPO_COLORS['Kotiutunut']).attr('rx',2);
-      g.append('rect').attr('x',x(bd.koti)).attr('y',y(bd.group)).attr('width',x(bd.osas)).attr('height',y.bandwidth())
+      g.append('rect').attr('x',x(bd.correct)).attr('y',y(bd.group)).attr('width',x(bd.wrong)).attr('height',y.bandwidth())
         .attr('fill',DISPO_COLORS['Osastolle']).attr('rx',2);
-      if (bd.koti > 8) {
-        g.append('text').attr('x',x(bd.koti/2)).attr('y',y(bd.group)+y.bandwidth()/2+4)
+      if (bd.correct > 8) {
+        g.append('text').attr('x',x(bd.correct/2)).attr('y',y(bd.group)+y.bandwidth()/2+4)
           .attr('text-anchor','middle').attr('fill','#fff').attr('font-size','11px').attr('font-weight','600')
-          .attr('font-family','var(--font-mono)').text(fmtNum(bd.koti,1)+'%');
+          .attr('font-family','var(--font-mono)').text(fmtNum(bd.correct,1)+'%');
       }
-      if (bd.osas > 8) {
-        g.append('text').attr('x',x(bd.koti+bd.osas/2)).attr('y',y(bd.group)+y.bandwidth()/2+4)
+      if (bd.wrong > 8) {
+        g.append('text').attr('x',x(bd.correct+bd.wrong/2)).attr('y',y(bd.group)+y.bandwidth()/2+4)
           .attr('text-anchor','middle').attr('fill','#fff').attr('font-size','11px').attr('font-weight','600')
-          .attr('font-family','var(--font-mono)').text(fmtNum(bd.osas,1)+'%');
+          .attr('font-family','var(--font-mono)').text(fmtNum(bd.wrong,1)+'%');
       }
     });
 
     g.append('g').call(d3.axisLeft(y)).selectAll('text').attr('font-size','11px').attr('font-family','var(--font-body)');
+
+    // Legend
+    const legend = svg.append('g').attr('transform',`translate(${cm.left},${cHeight-8})`);
+    [{lbl:'Oikein ohjattu', color:DISPO_COLORS['Kotiutunut']}, {lbl:'Väärässä paikassa', color:DISPO_COLORS['Osastolle']}].forEach((item, i) => {
+      const lg = legend.append('g').attr('transform',`translate(${i*140},0)`);
+      lg.append('rect').attr('width',12).attr('height',12).attr('rx',3).attr('fill',item.color);
+      lg.append('text').attr('x',16).attr('y',10).attr('font-size','11px').attr('fill','var(--text-muted)').attr('font-family','var(--font-body)').text(item.lbl);
+    });
   }
 
   // Comparison table
-  const allOsastoPct = N>0?100*allOsasto/N:0;
-  const allKotiPct = N>0?100*allKoti/N:0;
-  const mOsastoPct = n>0?100*mOsasto/n:0;
-  const mKotiPct = n>0?100*mKoti/n:0;
-  const nmOsastoPct = nNon>0?100*nmOsasto/nNon:0;
-  const nmKotiPct = nNon>0?100*nmKoti/nNon:0;
-
   document.getElementById('table-rule').innerHTML = `
     <table class="ctable">
-      <thead><tr><th></th><th>Kaikki</th><th>Sääntö (n=${n})</th><th>Loput (n=${nNon})</th></tr></thead>
+      <thead><tr><th></th><th>Satunnainen (50/50)</th><th>Säännöillä</th></tr></thead>
       <tbody>
-        <tr><th>Osastolle</th><td>${allOsasto} (${fmtNum(allOsastoPct,1)} %)</td><td>${mOsasto} (${fmtNum(mOsastoPct,1)} %)</td><td>${nmOsasto} (${fmtNum(nmOsastoPct,1)} %)</td></tr>
-        <tr><th>Kotiutunut</th><td>${allKoti} (${fmtNum(allKotiPct,1)} %)</td><td>${mKoti} (${fmtNum(mKotiPct,1)} %)</td><td>${nmKoti} (${fmtNum(nmKotiPct,1)} %)</td></tr>
-        <tr class="total-row"><th>Yhteensä</th><td>${N}</td><td>${n}</td><td>${nNon}</td></tr>
+        <tr><th>Oikein ohjattu</th><td>${baseCorrectN} (${fmtNum(baseCorrectPct,1)} %)</td><td>${hasRules ? totalCorrectN+' ('+fmtNum(totalCorrectPct,1)+' %)' : '-'}</td></tr>
+        <tr><th>Väärässä paikassa</th><td>${baseWrongN} (${fmtNum(baseWrongPct,1)} %)</td><td>${hasRules ? totalWrongN+' ('+fmtNum(totalWrongPct,1)+' %)' : '-'}</td></tr>
+        <tr class="total-row"><th>Yhteensä</th><td>${N}</td><td>${N}</td></tr>
       </tbody>
     </table>
   `;
@@ -2705,11 +2827,11 @@ function buildDecisionTree() {
   panel.innerHTML = `
     <div class="panel-header">
       <div class="panel-eyebrow">Analyysit</div>
-      <div class="panel-title">Päättelypuu</div>
+      <div class="panel-title">Tilastollisen menetelmän valinta</div>
       <div class="panel-desc">Valitse kaksi muuttujaa ja klikkaa oikea polku päättelypuussa. Puu opastaa oikean tilastollisen testin valintaan.</div>
     </div>
     <div class="chart-card">
-      <div class="cc-header"><div class="cc-header-text"><div class="cc-title">Testin valinta</div></div></div>
+      <div class="cc-header"><div class="cc-header-text"><div class="cc-title">Päättelypuu</div></div></div>
       <div class="cc-body">
         <div class="dt-selectors">
           <div class="dt-sel-group">
@@ -2727,7 +2849,14 @@ function buildDecisionTree() {
       </div>
     </div>
   `;
-  dtRenderTree();
+  // Set default Y variable to dispo
+  const dtYSelect = document.getElementById('dt-y-var');
+  if (dtYSelect) {
+    dtYSelect.value = 'dispo';
+    dtUpdatePair();
+  } else {
+    dtRenderTree();
+  }
 }
 
 function dtUpdatePair() {
